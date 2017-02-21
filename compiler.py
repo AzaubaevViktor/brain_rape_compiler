@@ -1,7 +1,9 @@
-from typing import List
+from typing import List, Tuple
 
-from br import Token, Line
+from br_parser import Token, Line, NameSpace
 from br_exceptions.lexer import LexerLevelErrorException
+from builtin_functions import builtin_add_function
+from bytecode import ByteCode
 
 
 class BfCompiler:
@@ -10,6 +12,8 @@ class BfCompiler:
         self.file = None
         self.lines = []
         self._lines_process()
+        self.namespaces = []  # type: List[NameSpace]
+        self._create_default_namespace()
 
     @staticmethod
     def _get_line_level(s):
@@ -61,12 +65,36 @@ class BfCompiler:
             line_n += 1
         self.file.close()
 
+    def _create_default_namespace(self):
+        ns = NameSpace(None)
+        ns.function_push(builtin_add_function)
+        self.namespaces.append(ns)
+
+    def compile(self) -> List[Tuple[List[ByteCode], Line]]:
+        bytecode = []
+        for line in self.lines:
+            ns = self.namespaces[-1]
+            func = ns.get_func_by_token(line.func_token)
+            if func.builtin:
+                variables = func.check_args(line.params)
+                code = func.compile(variables)
+                bytecode.append((code, line))
+        return bytecode
+
 
 if __name__ == "__main__":
-    compiler = BfCompiler('test.br')
+    compiler = BfCompiler('test_add.br')
+    print("==== LINES: ====")
     for line in compiler.lines:
         print(line)
 
-
-
+    bytecode = compiler.compile()
+    print()
+    print("==== BYTECODE: ====")
+    for code, line in bytecode:
+        for act in code:
+            print(act, end=" ")
+        print()
+        print(line)
+        print("------")
 

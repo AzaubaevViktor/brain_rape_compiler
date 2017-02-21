@@ -19,38 +19,18 @@ class Line:
         self.source = source
 
     @property
-    def func_token(self):
+    def func_token(self) -> Token:
         return self.tokens[0]
+
+    @property
+    def params(self) -> List[Token]:
+        return self.tokens[1:]
 
     def __str__(self):
         tokens_str = " | ".join([str(token) for token in self.tokens])
-        return "{}:{}: {}".format(self.line_n, self.level, tokens_str)
+        return "{}[{}]: {}".format(self.line_n, self.level, tokens_str)
 
 
 class Block:
     def __init__(self):
         pass
-
-
-class BfType:
-    pass
-
-
-class AbstractBfType:
-    pass
-
-
-class Argument:
-    pass
-
-
-class NameSpace:
-    pass
-
-
-
-
-class Function:
-    pass
-
-
