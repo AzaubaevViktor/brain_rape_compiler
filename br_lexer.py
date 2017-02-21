@@ -7,8 +7,11 @@ class Token:
         self.pos = pos
         self.text = text
 
-    def __str__(self):
+    def __repr__(self):
         return "{}:{}<{}>".format(self.line_n, self.pos, self.text)
+
+    def __str__(self):
+        return "{}".format(self.text)
 
 
 class Line:
@@ -27,7 +30,11 @@ class Line:
         return self.tokens[1:]
 
     def __str__(self):
-        tokens_str = " | ".join([str(token) for token in self.tokens])
+        tokens_str = " ".join([str(token) for token in self.tokens])
+        return "{}".format(tokens_str)
+
+    def __repr__(self):
+        tokens_str = " | ".join([repr(token) for token in self.tokens])
         return "{}[{}]: {}".format(self.line_n, self.level, tokens_str)
 
 
@@ -56,18 +63,22 @@ class Block:
     def level(self) -> int:
         return self.first_line.level
 
-    def __str__(self):
+    def __repr__(self):
+        result = ""
         if self.first_line.level < 0:
-            return "RootBlock"
+            result += "RootBlock"
         else:
-            return "Block[{func_name}] {lines} inside".format(
+            result += "Block[{func_name}]".format(
                 func_name=self.first_line.func_token.text,
-                lines=len(self.block_lines)
             )
+        result += " {lines} lines inside".format(
+            lines=len(self.block_lines)
+        )
+        return result
 
-    def debug_print(self, level=0, _ident=4):
+    def debug_print(self, level=0, _ident=4, view_func=str):
         def ident(s):
-            return " " * _ident * level + str(s)
+            return " " * _ident * level + view_func(s)
 
         lines = []
         if self.first_line.level >= 0:
