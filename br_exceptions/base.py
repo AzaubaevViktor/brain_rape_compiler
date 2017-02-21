@@ -1,0 +1,2 @@
+class BaseBrException(Exception):
+    pass

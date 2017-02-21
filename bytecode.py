@@ -1,0 +1,6 @@
+PLUS = 0
+MOVE = 1
+PRINT = 2
+READ = 3
+CYCLE_IN = 4
+CYCLE_OUT = 5
