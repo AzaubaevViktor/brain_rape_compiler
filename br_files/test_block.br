@@ -1,0 +1,30 @@
+_add 0 100
+_add 20 0
+_cycle 0
+    _add 0 -1
+    _add 1 2
+    _add 10 0
+_mov 2 1
+
+_cycle 2
+
+    _add 2 -1
+
+    _add 3 2
+
+_cycle 0
+    _cycle 1
+        _cycle 2
+            _cycle 3
+
+_cycle 0
+    _cycle 1
+        _cycle 2
+            _cycle 3
+    _cycle 4
+        _cycle 5
+
+
+
+_mov 4 3
+_print 4

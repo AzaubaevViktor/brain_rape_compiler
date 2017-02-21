@@ -20,6 +20,7 @@ class Argument:
 
 class BrFunctionType(Enum):
     NO_BLOCK = 1
+    BLOCK = 2
 
 
 class BrFunctionLifeTime(Enum):
