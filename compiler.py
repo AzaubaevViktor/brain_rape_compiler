@@ -75,7 +75,7 @@ class BfCompiler:
 
     def _block_process(self):
         """ Обрабатывает self.lines и где надо преобразовывает их в блоки"""
-        cur_block = self.block = Block(None, Line(-1, -1, [], "__PROGRAM__"))
+        cur_block = self.block = Block(None, Line(-1, -1, [Token(-1, -1, "__main")], "__main"))
         cur_iter = iter(self.lines)  # type: Iterator[Line]
         next_iter = iter(self.lines)  # type: Iterator[Line]
         next(next_iter)
@@ -105,8 +105,8 @@ class BfCompiler:
         ns.functions_push(builtin_functions)
         self.namespaces.append(ns)
 
-    def compile(self) -> List[Tuple[List[ByteCode], Line]]:
-        """ Итоговая компиляция """
+    def old_line_compile(self) -> List[Tuple[List[ByteCode], Line]]:
+        """ Старая версия итоговой компиляции для одного уровня вложенности """
         bytecode = []
         for line in self.lines:
             ns = self.namespaces[-1]
@@ -123,6 +123,9 @@ class BfCompiler:
             else:
                 pass
         return bytecode
+
+    def compile(self) -> List[Tuple[List[ByteCode], Line]]:
+        pass
 
 
 if __name__ == "__main__":

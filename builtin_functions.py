@@ -1,8 +1,7 @@
-
-from typing import List, Dict
-
-from br_parser import BrFunction, Argument, BrFunctionLifeTime, BrFunctionType
-from br_types import AbstractBrType, IntBrType
+from br_exceptions.parser import *
+from br_lexer import Line, Token, Block
+from br_parser import BrFunction, Argument, BrFunctionLifeTime, BrFunctionType, NameSpace
+from br_types import AbstractBrType, IntBrType, IdentifierBrType, BrTypeBrType
 from bytecode import ByteCode as B
 
 
@@ -24,7 +23,6 @@ add = _Add(
     ],
     BrFunctionType.NO_BLOCK,
     BrFunctionLifeTime.GLOBAL,
-    [],
     builtin=True
 )
 
@@ -52,7 +50,6 @@ mov = _Mov(
     ],
     BrFunctionType.NO_BLOCK,
     BrFunctionLifeTime.GLOBAL,
-    [],
     builtin=True
 )
 
@@ -84,7 +81,6 @@ mov2 = _Mov2(
     ],
     BrFunctionType.NO_BLOCK,
     BrFunctionLifeTime.GLOBAL,
-    [],
     builtin=True
 )
 
@@ -107,7 +103,6 @@ null = _Null(
     ],
     BrFunctionType.NO_BLOCK,
     BrFunctionLifeTime.GLOBAL,
-    [],
     builtin=True
 )
 
@@ -128,7 +123,6 @@ _print = _Print(
     ],
     BrFunctionType.NO_BLOCK,
     BrFunctionLifeTime.GLOBAL,
-    [],
     builtin=True
 )
 
@@ -150,10 +144,85 @@ _read = _Read(
     ],
     BrFunctionType.NO_BLOCK,
     BrFunctionLifeTime.GLOBAL,
-    [],
     builtin=True
 )
 
+
+class _Main(BrFunction):
+    pass
+
+
+_main = _Main(
+    '__main',
+    [],
+    BrFunctionType.BLOCK,
+    BrFunctionLifeTime.ONLY_CURRENT,
+    [Line(-1, 0, [Token(-1, 0, "__code")], "__code")],  # hack for textual insert
+    builtin=True
+)
+
+
+class _Macro(BrFunction):
+    def check_args(self, params: List[Token]) -> Dict[str, AbstractBrType]:
+        variables = {}
+        if len(params) < 2:
+            raise ParserArgumentCheckLenException(self, params, 2)
+        if len(params) % 2:
+            raise ParserArgumentCheckLenException(self, params, len(params) + 1)
+
+        params_iter = iter(params)
+        try:
+            variables['lifetime'] = BrFunctionLifeTime(next(params_iter))
+            variables['name'] = IdentifierBrType(next(params_iter))
+            variables['arguments'] = []
+
+            try:
+                while True:
+                    arg_type = BrTypeBrType(next(params_iter)).value
+                    arg_name = IdentifierBrType(next(params_iter)).value
+                    variables['arguments'].append(
+                        Argument(arg_name, arg_type)
+                    )
+
+            except StopIteration:
+                pass
+        except Exception as e:
+            raise ParserArgumentCheckTypeException(
+                self,
+                params,
+                exc=e
+            )
+
+        return variables
+
+    def compile_block(self,
+                      variables: Dict[str, AbstractBrType],
+                      block_inside: List[Line or Block] or None = None,
+                      namespace: NameSpace = None
+                      ):
+        # Because variables['arguments'] List[Argument], not AbstractBrType
+        # noinspection PyTypeChecker
+        namespace.function_push(
+            BrFunction(
+                variables['name'].value,
+                variables['arguments'],
+                BrFunctionType.NO_BLOCK,
+                variables['lifetime'].value,
+                source=block_inside,
+                code=block_inside,
+            )
+        )
+        return []
+
+
+
+_macro = _Macro(
+    "macro",
+    [],  # because custom check_args
+    BrFunctionType.BLOCK,
+    BrFunctionLifeTime.GLOBAL,
+    builtin=True
+)
 
 builtin_functions = [
     add,
@@ -161,5 +230,6 @@ builtin_functions = [
     mov2,
     null,
     _print,
-    _read
+    _read,
+    _main
 ]

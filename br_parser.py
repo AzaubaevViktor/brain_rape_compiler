@@ -4,7 +4,7 @@ from typing import List, Dict, Type, TypeVar, Tuple
 
 from br_exceptions.parser import ParserArgumentCheckLenException, ParserArgumentCheckTypeException, \
     ParserFunctionNotFoundException
-from br_lexer import Line, Token
+from br_lexer import Line, Token, Block
 from br_types import AbstractBrType
 from bytecode import ByteCode
 
@@ -24,7 +24,8 @@ class BrFunctionType(Enum):
 
 
 class BrFunctionLifeTime(Enum):
-    GLOBAL = 1
+    GLOBAL = 1  # Текущий namespace и дочерние
+    ONLY_CURRENT = 2  # Только этот namespace (Для __main)
 
 
 class BrFunction:
@@ -33,13 +34,15 @@ class BrFunction:
                  arguments: List[Argument],
                  _type: BrFunctionType,
                  lifetime: BrFunctionLifeTime,
-                 code: List[Line],
+                 source: List[Line] or None = None,
+                 code: List[Line] or None = None,
                  builtin: bool = False
                  ):
         self.name = name
         self.arguments = arguments
         self.type = _type
         self.lifetime = lifetime
+        self.source = source
         self.code = code
         self.builtin = builtin
 
@@ -57,12 +60,20 @@ class BrFunction:
             raise ParserArgumentCheckTypeException(
                 self,
                 params,
-                -1,
-                e
+                exc=e
             )
         return variables
 
-    def compile(self, variables: Dict[str, AbstractBrType]) -> List[ByteCode]:
+    def compile(self,
+                variables: Dict[str, AbstractBrType]
+                ) -> List[ByteCode]:
+        raise NotImplemented()
+
+    def compile_block(self,
+                      variables: Dict[str, AbstractBrType],
+                      block_inside: List[Line or Block] or None = None,
+                      namespace: 'NameSpace' = None
+                      ) -> List[ByteCode]:
         raise NotImplemented()
 
 

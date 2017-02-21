@@ -16,7 +16,7 @@ class ParserArgumentCheckException(BaseParserException):
                  ):
         self.function = function
         self.params = params
-        self.number = number
+        self.number = number  # for functions with variative len
         self.exc = exc
 
     def __str__(self):
@@ -29,7 +29,7 @@ class ParserArgumentCheckLenException(ParserArgumentCheckException):
                "функции `{func.name}`. Ожидается {expect}, " \
                "передано `{passed}`".format(
             func=self.function,
-            expect=len(self.function.arguments),
+            expect=len(self.function.arguments or self.number),
             passed=len(self.params)
         )
 
