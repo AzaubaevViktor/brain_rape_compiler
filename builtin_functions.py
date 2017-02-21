@@ -157,7 +157,7 @@ _main = _Main(
     [],
     BrFunctionType.BLOCK,
     BrFunctionLifeTime.ONLY_CURRENT,
-    [Line(-1, 0, [Token(-1, 0, "__code")], "__code")],  # hack for textual insert
+    code=([], []),  # hack for textual insert
     builtin=True
 )
 
@@ -213,8 +213,6 @@ class _Macro(BrFunction):
             )
         )
         return []
-
-
 
 _macro = _Macro(
     "macro",

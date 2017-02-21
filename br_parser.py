@@ -35,7 +35,7 @@ class BrFunction:
                  _type: BrFunctionType,
                  lifetime: BrFunctionLifeTime,
                  source: List[Line] or None = None,
-                 code: List[Line] or None = None,
+                 code: List[Line or Block] or Tuple(List[Line or Block], List[Line or Block]) or None = None,
                  builtin: bool = False
                  ):
         self.name = name

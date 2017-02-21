@@ -125,6 +125,21 @@ class BfCompiler:
         return bytecode
 
     def compile(self) -> List[Tuple[List[ByteCode], Line]]:
+        # func: not builtin and block
+        #   new namespace
+        #   recursive compile:
+        #       params
+        #       block.code[0] + block_inside + block.code[1]
+        # func: not builtin and not block
+        #   recursive compile:
+        #       params
+        #       block_inside
+        # func: builtin and block
+        #   func.block_compile
+        #   if not:
+        #       not builtin + block compile
+        # func: builtin and not block
+        #    func.compile
         pass
 
 
