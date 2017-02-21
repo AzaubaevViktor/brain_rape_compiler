@@ -20,7 +20,7 @@ class ByteCode:
             if self.arg >= 0:
                 return ">" * self.arg
             else:
-                return "<" * self.arg
+                return "<" * -self.arg
         elif self.PRINT == self.op:
             return "."
         elif self.READ == self.op:

@@ -2,7 +2,7 @@ from typing import List, Tuple
 
 from br_parser import Token, Line, NameSpace
 from br_exceptions.lexer import LexerLevelErrorException
-from builtin_functions import builtin_add_function
+from builtin_functions import builtin_functions
 from bytecode import ByteCode
 
 
@@ -67,7 +67,7 @@ class BfCompiler:
 
     def _create_default_namespace(self):
         ns = NameSpace(None)
-        ns.function_push(builtin_add_function)
+        ns.functions_push(builtin_functions)
         self.namespaces.append(ns)
 
     def compile(self) -> List[Tuple[List[ByteCode], Line]]:
@@ -83,7 +83,7 @@ class BfCompiler:
 
 
 if __name__ == "__main__":
-    compiler = BfCompiler('test_add.br')
+    compiler = BfCompiler('test.br')
     print("==== LINES: ====")
     for line in compiler.lines:
         print(line)
@@ -97,4 +97,12 @@ if __name__ == "__main__":
         print()
         print(line)
         print("------")
+
+    print()
+    print("==== BRAINFUCK ====")
+    for code, line in bytecode:
+        for act in code:
+            print(act.compile(), end="")
+        print()
+    print()
 

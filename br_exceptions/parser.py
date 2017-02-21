@@ -9,7 +9,7 @@ class BaseParserException(BaseBrException):
 
 class ParserArgumentCheckException(BaseParserException):
     def __init__(self,
-                 function: 'Function',
+                 function: 'BrFunction',
                  params: List['Token'],
                  number: int = None,
                  exc: Exception = None
@@ -25,7 +25,13 @@ class ParserArgumentCheckException(BaseParserException):
 
 class ParserArgumentCheckLenException(ParserArgumentCheckException):
     def __str__(self):
-        return "Неверное количество аргументов"
+        return "Неверное количество аргументов для " \
+               "функции `{func.name}`. Ожидается {expect}, " \
+               "передано `{passed}`".format(
+            func=self.function,
+            expect=len(self.function.arguments),
+            passed=len(self.params)
+        )
 
 
 class ParserArgumentCheckTypeException(ParserArgumentCheckException):

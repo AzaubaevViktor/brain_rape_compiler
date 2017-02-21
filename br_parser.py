@@ -26,7 +26,7 @@ class BrFunctionLifeTime(Enum):
     GLOBAL = 1
 
 
-class Function:
+class BrFunction:
     def __init__(self,
                  name: str,
                  arguments: List[Argument],
@@ -70,10 +70,14 @@ class NameSpace:
         self.parent = parent  # type: NameSpace
         self.functions = {}
 
-    def function_push(self, func: Function):
+    def function_push(self, func: BrFunction):
         self.functions[func.name] = func
 
-    def get_func_by_token(self, token: Token) -> Function:
+    def functions_push(self, funcs: List[BrFunction]):
+        for func in funcs:
+            self.function_push(func)
+
+    def get_func_by_token(self, token: Token) -> BrFunction:
         func_name = token.text
         if func_name in self.functions:
             return self.functions[func_name]
