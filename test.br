@@ -5,4 +5,6 @@ _mov 2 1     # dsakf;sfjakfasd;falsdfkm
 _mov2 3 4 2
 # test
 _null 4
+_read 5
 _print 3
+_print 5

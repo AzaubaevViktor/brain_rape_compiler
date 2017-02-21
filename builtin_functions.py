@@ -64,14 +64,14 @@ class _Mov2(BrFunction):
         from_addr = variables['from_addr'].value
         return [
             B(B.MOVE, from_addr - 0),  # Move to from_addr
-            B(B.CYCLE_IN, ),  # While *from_addr not null, do
+            B(B.CYCLE_IN),  # While *from_addr not null, do
             B(B.PLUS, -1),  # *from_addr -= 1
             B(B.MOVE, to1_addr - from_addr),  # go to to1_addr
             B(B.PLUS, 1),  # *to1_addr += 1
             B(B.MOVE, to2_addr - to1_addr),  # goto to2_addr
             B(B.PLUS, 1),  # *to2_addr += 1
             B(B.MOVE, from_addr - to2_addr),  # go to from_addr
-            B(B.CYCLE_OUT, ),  # if *from_addr == null then end
+            B(B.CYCLE_OUT),  # if *from_addr == null then end
             B(B.MOVE, 0 - from_addr)  # move to 0
         ]
 
@@ -94,9 +94,9 @@ class _Null(BrFunction):
         addr = variables['addr'].value
         return [
             B(B.MOVE, addr - 0),   # goto addr
-            B(B.CYCLE_IN, ),   # [
+            B(B.CYCLE_IN),   # [
             B(B.PLUS, -1),     # -
-            B(B.CYCLE_OUT, ),  # ]
+            B(B.CYCLE_OUT),  # ]
             B(B.MOVE, 0 - addr)   # goto 0
         ]
 
@@ -117,7 +117,7 @@ class _Print(BrFunction):
         addr = variables['addr'].value
         return [
             B(B.MOVE, addr - 0),    # goto addr
-            B(B.PRINT, ),           # print from addr
+            B(B.PRINT),           # print from addr
             B(B.MOVE, 0 - addr)     # goto 0
         ]
 
@@ -133,10 +133,33 @@ _print = _Print(
 )
 
 
+class _Read(BrFunction):
+    def compile(self, variables: Dict[str, AbstractBrType]):
+        addr = variables['addr'].value
+        return [
+            B(B.MOVE, addr - 0),
+            B(B.READ),
+            B(B.MOVE, 0 - addr)
+        ]
+
+
+_read = _Read(
+    '_read',
+    [
+        Argument('addr', IntBrType)
+    ],
+    BrFunctionType.NO_BLOCK,
+    BrFunctionLifeTime.GLOBAL,
+    [],
+    builtin=True
+)
+
+
 builtin_functions = [
     add,
     mov,
     mov2,
     null,
-    _print
+    _print,
+    _read
 ]
