@@ -124,7 +124,28 @@ class BfCompiler:
                 pass
         return bytecode
 
-    def compile(self) -> List[Tuple[List[ByteCode], Line]]:
+    def compile(self,
+                namespace: NameSpace,
+                lines: List[Line or Block]
+                ) -> List[Tuple[List[ByteCode], Line or Block]]:
+        bytecode = []
+        for expr in lines:
+            func = namespace.get_func_by_token(expr.func_token)
+            if isinstance(expr, Line):
+                if func.builtin:
+                    variables = func.check_args(expr.params)
+                    code = func.compile(variables)
+                    bytecode.append((code, expr))
+                else:
+                    pass
+            elif isinstance(expr, Block):
+                if func.builtin:
+                    pass
+                else:
+                    pass
+
+        return []
+
         # func: not builtin and block
         #   new namespace
         #   recursive compile:

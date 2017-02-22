@@ -98,3 +98,7 @@ class NameSpace:
         else:
             raise ParserFunctionNotFoundException(token)
 
+    def create_namespace(self):
+        ns = NameSpace(self)
+        return ns
+
