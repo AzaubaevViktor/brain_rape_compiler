@@ -1,8 +1,8 @@
 from typing import Iterator
 from typing import List, Tuple
 
-from br_lexer import Block
-from br_parser import Token, Line, NameSpace, BrFunctionType
+from br_lexer import Block, Expression
+from br_parser import Token, Line, NameSpace, FunctionType
 from br_exceptions.lexer import LexerLevelErrorException, LexerBlockLevelErrorException
 from builtin_functions import builtin_functions
 from bytecode import ByteCode
@@ -113,12 +113,12 @@ class BfCompiler:
             func = ns.get_func_by_token(line.func_token)
             if func.builtin:
                 #  Builtin NoBlock function
-                if BrFunctionType.NO_BLOCK == func.type:
+                if FunctionType.NO_BLOCK == func.type:
                     variables = func.check_args(line.params)
                     code = func.compile(variables)
                     bytecode.append((code, line))
                 #  Builtin Block Function
-                elif BrFunctionType.BLOCK == func.type:
+                elif FunctionType.BLOCK == func.type:
                     pass
             else:
                 pass
@@ -131,11 +131,10 @@ class BfCompiler:
             self.block.block_lines
         )
 
-
     def _compile(self,
-                namespace: NameSpace,
-                lines: List[Line or Block]
-                ) -> List[Tuple[List[ByteCode], Line or Block]]:
+                 namespace: NameSpace,
+                 lines: List[Expression]
+                 ) -> List[Tuple[List[ByteCode], Expression]]:
         bytecode = []
         for expr in lines:
             func = namespace.get_func_by_token(expr.func_token)

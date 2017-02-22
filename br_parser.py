@@ -1,14 +1,14 @@
-import typing
 from enum import Enum
 from typing import List, Dict, Type, TypeVar, Tuple
 
 from br_exceptions.parser import ParserArgumentCheckLenException, ParserArgumentCheckTypeException, \
     ParserFunctionNotFoundException
-from br_lexer import Line, Token, Block
+from br_lexer import Line, Token,  Expression
 from bytecode import ByteCode
 
 
 class Argument:
+    """ Аргумент для функции """
     def __init__(self, name: str, _type: Type['AbstractBrType']):
         self.name = name
         self.type = _type
@@ -17,24 +17,25 @@ class Argument:
         return self.type(token)
 
 
-class BrFunctionType(Enum):
+class FunctionType(Enum):
     NO_BLOCK = 1
     BLOCK = 2
 
 
-class BrFunctionLifeTime(Enum):
+class FunctionLifeTime(Enum):
     GLOBAL = 1  # Текущий namespace и дочерние
     ONLY_CURRENT = 2  # Только этот namespace (Для __main)
 
 
-class BrFunction:
+class Function:
+    """ функция """
     def __init__(self,
                  name: str,
                  arguments: List[Argument],
-                 _type: BrFunctionType,
-                 lifetime: BrFunctionLifeTime,
+                 _type: FunctionType,
+                 lifetime: FunctionLifeTime,
                  source: List[Line] or None = None,
-                 code: List[Line or Block] or Tuple(List[Line or Block], List[Line or Block]) or None = None,
+                 code: List[Expression] or Tuple(List[Expression], List[Expression]) or None = None,
                  builtin: bool = False
                  ):
         self.name = name
@@ -66,14 +67,14 @@ class BrFunction:
     def compile(self,
                 variables: Dict[str, 'AbstractBrType']
                 ) -> List[ByteCode]:
-        raise NotImplemented()
+        return NotImplemented
 
     def compile_block(self,
                       variables: Dict[str, 'AbstractBrType'],
-                      block_inside: List[Line or Block] or None = None,
+                      block_inside: List[Expression] or None = None,
                       namespace: 'NameSpace' = None
                       ) -> List[ByteCode]:
-        raise NotImplemented()
+        return NotImplemented
 
 
 class NameSpace:
@@ -81,14 +82,14 @@ class NameSpace:
         self.parent = parent  # type: NameSpace
         self.functions = {}
 
-    def function_push(self, func: BrFunction):
+    def function_push(self, func: Function):
         self.functions[func.name] = func
 
-    def functions_push(self, funcs: List[BrFunction]):
+    def functions_push(self, funcs: List[Function]):
         for func in funcs:
             self.function_push(func)
 
-    def get_func_by_token(self, token: Token) -> BrFunction:
+    def get_func_by_token(self, token: Token) -> Function:
         func_name = token.text
         if func_name in self.functions:
             return self.functions[func_name]

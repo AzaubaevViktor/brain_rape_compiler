@@ -1,3 +1,4 @@
+import abc
 from typing import List
 
 
@@ -14,10 +15,31 @@ class Token:
         return "{}".format(self.text)
 
 
-class Line:
-    def __init__(self, line_n: int, level: int, tokens: List[Token], source: str):
+class Expression(metaclass=abc.ABCMeta):
+    @property
+    @abc.abstractmethod
+    def func_token(self) -> Token:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def params(self) -> List[Token]:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def level(self) -> int:
+        pass
+
+
+class Line(Expression):
+    def __init__(self,
+                 line_n: int,
+                 level: int,
+                 tokens: List[Token],
+                 source: str):
         self.line_n = line_n
-        self.level = level
+        self._level = level
         self.tokens = tokens
         self.source = source
 
@@ -29,6 +51,10 @@ class Line:
     def params(self) -> List[Token]:
         return self.tokens[1:]
 
+    @property
+    def level(self) -> int:
+        return self._level
+
     def __str__(self):
         tokens_str = " ".join([str(token) for token in self.tokens])
         return "{}".format(tokens_str)
@@ -38,11 +64,11 @@ class Line:
         return "{}[{}]: {}".format(self.line_n, self.level, tokens_str)
 
 
-class Block:
+class Block(Expression):
     def __init__(self, parent: 'Block' or None, first_line: Line):
         self.first_line = first_line
         self.parent = parent
-        self.block_lines = []  # type: List[Line or Block]
+        self.block_lines = []  # type: List[Expression]
 
     def push(self, smth: Line or 'Block'):
         assert isinstance(smth, Line) or isinstance(smth, Block)

@@ -1,11 +1,11 @@
 from br_exceptions.parser import *
-from br_lexer import Line, Token, Block
-from br_parser import BrFunction, Argument, BrFunctionLifeTime, BrFunctionType, NameSpace
+from br_lexer import Token, Expression
+from br_parser import Function, Argument, FunctionLifeTime, FunctionType, NameSpace
 from br_types import AbstractBrType, IntBrType, IdentifierBrType, BrTypeBrType
 from bytecode import ByteCode as B
 
 
-class _Add(BrFunction):
+class _Add(Function):
     def compile(self, variables: Dict[str, AbstractBrType]):
         addr = variables['addr'].value
         value = variables['value'].value
@@ -21,13 +21,13 @@ add = _Add(
         Argument('addr', IntBrType),
         Argument('value', IntBrType)
     ],
-    BrFunctionType.NO_BLOCK,
-    BrFunctionLifeTime.GLOBAL,
+    FunctionType.NO_BLOCK,
+    FunctionLifeTime.GLOBAL,
     builtin=True
 )
 
 
-class _Mov(BrFunction):
+class _Mov(Function):
     def compile(self, variables: Dict[str, AbstractBrType]):
         to_addr = variables['to_addr'].value
         from_addr = variables['from_addr'].value
@@ -48,13 +48,13 @@ mov = _Mov(
         Argument('to_addr', IntBrType),
         Argument('from_addr', IntBrType)
     ],
-    BrFunctionType.NO_BLOCK,
-    BrFunctionLifeTime.GLOBAL,
+    FunctionType.NO_BLOCK,
+    FunctionLifeTime.GLOBAL,
     builtin=True
 )
 
 
-class _Mov2(BrFunction):
+class _Mov2(Function):
     def compile(self, variables: Dict[str, AbstractBrType]):
         to1_addr = variables['to1_addr'].value
         to2_addr = variables['to2_addr'].value
@@ -79,13 +79,13 @@ mov2 = _Mov2(
         Argument('to2_addr', IntBrType),
         Argument('from_addr', IntBrType)
     ],
-    BrFunctionType.NO_BLOCK,
-    BrFunctionLifeTime.GLOBAL,
+    FunctionType.NO_BLOCK,
+    FunctionLifeTime.GLOBAL,
     builtin=True
 )
 
 
-class _Null(BrFunction):
+class _Null(Function):
     def compile(self, variables: Dict[str, AbstractBrType]):
         addr = variables['addr'].value
         return [
@@ -101,13 +101,13 @@ null = _Null(
     [
         Argument('addr', IntBrType)
     ],
-    BrFunctionType.NO_BLOCK,
-    BrFunctionLifeTime.GLOBAL,
+    FunctionType.NO_BLOCK,
+    FunctionLifeTime.GLOBAL,
     builtin=True
 )
 
 
-class _Print(BrFunction):
+class _Print(Function):
     def compile(self, variables: Dict[str, AbstractBrType]):
         addr = variables['addr'].value
         return [
@@ -121,13 +121,13 @@ _print = _Print(
     [
         Argument('addr', IntBrType)
     ],
-    BrFunctionType.NO_BLOCK,
-    BrFunctionLifeTime.GLOBAL,
+    FunctionType.NO_BLOCK,
+    FunctionLifeTime.GLOBAL,
     builtin=True
 )
 
 
-class _Read(BrFunction):
+class _Read(Function):
     def compile(self, variables: Dict[str, AbstractBrType]):
         addr = variables['addr'].value
         return [
@@ -142,27 +142,27 @@ _read = _Read(
     [
         Argument('addr', IntBrType)
     ],
-    BrFunctionType.NO_BLOCK,
-    BrFunctionLifeTime.GLOBAL,
+    FunctionType.NO_BLOCK,
+    FunctionLifeTime.GLOBAL,
     builtin=True
 )
 
 
-class _Main(BrFunction):
+class _Main(Function):
     pass
 
 
 _main = _Main(
     '__main',
     [],
-    BrFunctionType.BLOCK,
-    BrFunctionLifeTime.ONLY_CURRENT,
+    FunctionType.BLOCK,
+    FunctionLifeTime.ONLY_CURRENT,
     code=([], []),  # hack for textual insert
     builtin=True
 )
 
 
-class _Macro(BrFunction):
+class _Macro(Function):
     def check_args(self, params: List[Token]) -> Dict[str, AbstractBrType]:
         variables = {}
         if len(params) < 2:
@@ -172,7 +172,7 @@ class _Macro(BrFunction):
 
         params_iter = iter(params)
         try:
-            variables['lifetime'] = BrFunctionLifeTime(next(params_iter))
+            variables['lifetime'] = FunctionLifeTime(next(params_iter))
             variables['name'] = IdentifierBrType(next(params_iter))
             variables['arguments'] = []
 
@@ -197,16 +197,16 @@ class _Macro(BrFunction):
 
     def compile_block(self,
                       variables: Dict[str, AbstractBrType],
-                      block_inside: List[Line or Block] or None = None,
+                      block_inside: List[Expression] or None = None,
                       namespace: NameSpace = None
                       ):
         # Because variables['arguments'] List[Argument], not AbstractBrType
         # noinspection PyTypeChecker
         namespace.function_push(
-            BrFunction(
+            Function(
                 variables['name'].value,
                 variables['arguments'],
-                BrFunctionType.NO_BLOCK,
+                FunctionType.NO_BLOCK,
                 variables['lifetime'].value,
                 source=block_inside,
                 code=block_inside,
@@ -217,8 +217,8 @@ class _Macro(BrFunction):
 _macro = _Macro(
     "macro",
     [],  # because custom check_args
-    BrFunctionType.BLOCK,
-    BrFunctionLifeTime.GLOBAL,
+    FunctionType.BLOCK,
+    FunctionLifeTime.GLOBAL,
     builtin=True
 )
 

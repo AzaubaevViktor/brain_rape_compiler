@@ -1,19 +1,23 @@
+import abc
 import re
 
 from br_exceptions.types import *
 from br_lexer import Token
-from br_parser import BrFunctionLifeTime
+from br_parser import FunctionLifeTime
 
 
-class AbstractBrType:
+class AbstractBrType(metaclass=abc.ABCMeta):
+
     type_name = None
 
     def __init__(self, raw: Token):
         self.token = raw
-        self.value = self._parse()
+        self.value = self._parse(raw.text)
 
-    def _parse(self):
-        raise NotImplemented()
+    @classmethod
+    @abc.abstractclassmethod
+    def _parse(cls, text):
+        pass
 
     def __str__(self):
         return "Type<{}>:{}".format(self.type_name, self.value)
@@ -22,8 +26,9 @@ class AbstractBrType:
 class IntBrType(AbstractBrType):
     type_name = "int"
 
-    def _parse(self):
-        return int(self.token.text)
+    @classmethod
+    def _parse(cls, text):
+        return int(text)
 
 
 # Должен стоять последним, так как смотрит все модули выше него
@@ -35,37 +40,40 @@ class BrTypeBrType(AbstractBrType):
               and cl != AbstractBrType
               }
 
-    def _parse(self):
-        type_name = self.token.text
-        tp = self._types.get(type_name, None)
+    @classmethod
+    def _parse(cls, text):
+        type_name = text
+        tp = cls._types.get(type_name, None)
         if not tp:
             raise TypeNameErrorException(type_name)
-        self.value = tp
+        return tp
 
 
+# Здесь внутренние типы, которые нельзя использовать в программе
 class IdentifierBrType(AbstractBrType):
     type_name = "func_name"
     _regexp = re.compile(r'[A-z]\w*')
 
-    def _parse(self):
-        name = self.token.text
-        match = self._regexp.match(name)
+    @classmethod
+    def _parse(cls, text):
+        name = text
+        match = cls._regexp.match(name)
         if not match:
             raise IdentifierNameErrorException(name)
         span = match.span()
         if (span[1] - span[0]) > len(name):
             raise IdentifierNameErrorException(name)
-        self.value = name
+        return name
 
 
-# Здесь внутренние типы, которые нельзя использовать снаружи
 class FunctionLifeTimeBrType(AbstractBrType):
     _type_name = "function_type"
-    _values = {i.name: i for i in BrFunctionLifeTime}
+    _values = {i.name: i for i in FunctionLifeTime}
 
-    def _parse(self):
-        name = self.token.text
-        life_time = self._values.get(name, None)
+    @classmethod
+    def _parse(cls, text):
+        name = text
+        life_time = cls._values.get(name, None)
         if not life_time:
             raise FunctionLifeTimeErrorException(name)
-        self.value = life_time
+        return life_time
