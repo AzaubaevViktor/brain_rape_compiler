@@ -1,3 +1,4 @@
+import traceback
 from typing import Dict, List, Tuple
 
 from br_exceptions.base import BaseBrException
@@ -36,7 +37,10 @@ class ParserArgumentCheckLenException(ParserArgumentCheckException):
 
 class ParserArgumentCheckTypeException(ParserArgumentCheckException):
     def __str__(self):
-        return "Невозможно сопоставить тип"
+
+        return "Невозможно сопоставить тип, ошибка:\n====\n" \
+               "{}\n" \
+               "{}".format(type(self.exc), self.exc)
 
 
 class ParserFunctionNotFoundException(BaseParserException):

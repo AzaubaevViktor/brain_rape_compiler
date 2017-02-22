@@ -1,7 +1,10 @@
+import sys
+
 from br_exceptions.parser import *
 from br_lexer import Token, Expression
 from br_parser import Function, Argument, FunctionLifeTime, FunctionType, NameSpace
-from br_types import AbstractBrType, IntBrType, IdentifierBrType, BrTypeBrType
+from br_types import AbstractBrType, IntBrType, IdentifierBrType, BrTypeBrType, \
+    FunctionLifeTimeBrType
 from bytecode import ByteCode as B
 
 
@@ -172,7 +175,7 @@ class _Macro(Function):
 
         params_iter = iter(params)
         try:
-            variables['lifetime'] = FunctionLifeTime(next(params_iter))
+            variables['lifetime'] = FunctionLifeTimeBrType(next(params_iter))
             variables['name'] = IdentifierBrType(next(params_iter))
             variables['arguments'] = []
 
@@ -187,6 +190,7 @@ class _Macro(Function):
             except StopIteration:
                 pass
         except Exception as e:
+            traceback.print_exception(*sys.exc_info())
             raise ParserArgumentCheckTypeException(
                 self,
                 params,
@@ -200,21 +204,27 @@ class _Macro(Function):
                       block_inside: List[Expression] or None = None,
                       namespace: NameSpace = None
                       ):
+        function_name = variables['name'].value
+        arguments = variables['arguments']  # type: List[Argument]
+        lifetime = variables['lifetime'].value
         # Because variables['arguments'] List[Argument], not AbstractBrType
-        # noinspection PyTypeChecker
         namespace.function_push(
             Function(
-                variables['name'].value,
-                variables['arguments'],
+                function_name,
+                arguments,
                 FunctionType.NO_BLOCK,
-                variables['lifetime'].value,
+                lifetime,
                 source=block_inside,
                 code=block_inside,
             )
         )
-        return []
+        return [
+            B(B.NONE,
+              "Add function `{}` to current namespace".format(function_name)
+              ),
+        ]
 
-_macro = _Macro(
+macro = _Macro(
     "macro",
     [],  # because custom check_args
     FunctionType.BLOCK,
@@ -229,5 +239,6 @@ builtin_functions = [
     null,
     _print,
     _read,
+    macro,
     _main
 ]

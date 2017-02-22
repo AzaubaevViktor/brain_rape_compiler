@@ -1,0 +1,7 @@
+_add 0 5
+
+macro global test
+    _add 5 6
+    mov 6 5
+
+test

@@ -68,7 +68,7 @@ class IdentifierBrType(AbstractBrType):
 
 class FunctionLifeTimeBrType(AbstractBrType):
     _type_name = "function_type"
-    _values = {i.name: i for i in FunctionLifeTime}
+    _values = {i.name.lower(): i for i in FunctionLifeTime}
 
     @classmethod
     def _parse(cls, text):

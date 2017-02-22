@@ -1,4 +1,5 @@
 class ByteCode:
+    NONE = -1
     PLUS = 0
     MOVE = 1
     PRINT = 2
@@ -7,6 +8,7 @@ class ByteCode:
     CYCLE_OUT = 5
 
     _associate = {
+        "#": (NONE, 1),
         "+": (PLUS, 1),
         "-": (PLUS, -1),
         ">": (MOVE, 1),
@@ -24,7 +26,7 @@ class ByteCode:
         if isinstance(self.op, str):
             assoc = self._associate[self.op]
             self.op = assoc[0]
-            if self.arg:
+            if isinstance(self.arg, int):
                 self.arg *= assoc[1]
 
     def compile(self) -> str:
@@ -68,5 +70,7 @@ class ByteCode:
             return "BC([)"
         elif self.CYCLE_OUT == self.op:
             return "BC(])"
+        elif self.NONE == self.op:
+            return "BC(#, {})".format(self.arg)
         else:
             return "BC(UNKNOWN)"

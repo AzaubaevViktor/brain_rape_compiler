@@ -16,6 +16,11 @@ class Argument:
     def apply(self, token: Token) -> 'AbstractBrType':
         return self.type(token)
 
+    def __repr__(self):
+        return "Argument<{self.type.__name__} {self.name}>".format(
+            self=self
+        )
+
 
 class FunctionType(Enum):
     NO_BLOCK = 1
@@ -42,7 +47,7 @@ class Function:
         self.arguments = arguments
         self.type = _type
         self.lifetime = lifetime
-        self.source = source
+        self.source = source or []
         self.code = code
         self.builtin = builtin
 
@@ -75,6 +80,26 @@ class Function:
                       namespace: 'NameSpace' = None
                       ) -> List[ByteCode]:
         return NotImplemented
+
+    def __str__(self):
+
+        lines_len = len(self.source)
+
+        about = "{is_builtin}" \
+                "{lifetime} " \
+                "{type} " \
+                "Function " \
+                "`{name}`: " \
+                "{arguments}; {lines_len} lines inside".format(
+            is_builtin="Builtin " if self.builtin else "",
+            type=self.type.name.lower(),
+            lifetime=self.lifetime.name.lower(),
+            name=self.name,
+            arguments=self.arguments,
+            lines_len=lines_len
+        )
+        return about
+
 
 
 class NameSpace:

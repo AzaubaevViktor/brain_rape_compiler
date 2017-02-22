@@ -143,13 +143,20 @@ class BfCompiler:
                     # Builtin no block
                     variables = func.check_args(expr.params)
                     code = func.compile(variables)
-                    bytecode.append((code, expr))
+                    bytecode.append((code, func, expr))
                 else:
-                    # not builtin no block
+                    # WOW WOW я остановился тут
                     pass
             elif isinstance(expr, Block):
                 if func.builtin:
                     # builtin block
+                    variables = func.check_args(expr.params)
+                    code = func.compile_block(
+                        variables,
+                        expr.block_lines,
+                        namespace
+                    )
+                    bytecode.append((code, func, expr))
                     pass
                 else:
                     # not builtin block
@@ -176,10 +183,10 @@ class BfCompiler:
 
 
 if __name__ == "__main__":
-    compiler = BfCompiler('br_files/test.br')
+    compiler = BfCompiler('br_files/test_macro.br')
     print("==== LINES: ====")
-    for line in compiler.lines:
-        print(line)
+    for expr in compiler.lines:
+        print(expr)
 
     print(compiler.block)
 
@@ -192,16 +199,17 @@ if __name__ == "__main__":
     bytecode = compiler.compile()
     print()
     print("==== BYTECODE: ====")
-    for code, line in bytecode:
+    for code, func, expr in bytecode:
         for act in code:
             print(act, end=" ")
         print()
-        print(line)
+        print(func)
+        print(expr)
         print("------")
 
     print()
     print("==== BRAINFUCK ====")
-    for code, line in bytecode:
+    for code, *_ in bytecode:
         for act in code:
             print(act.compile(), end="")
         print()
