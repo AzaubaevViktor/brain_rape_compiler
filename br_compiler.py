@@ -137,10 +137,10 @@ class BrCompiler:
 
     def _compile(self,
                  namespace: NameSpace,
-                 lines: List[Expression]
+                 expressions: List[Expression]
                  ) -> List[Tuple[List[ByteCode], Expression]]:
         bytecode = []
-        for expr in lines:
+        for expr in expressions:
             func = namespace.get_func(expr.func_token)
             if isinstance(expr, Line):
                 if func.builtin:
@@ -151,7 +151,11 @@ class BrCompiler:
                 else:
                     # not builtin no block
                     variables = func.check_args(expr.params)
-                    pass
+                    code = func.code
+                    new_ns = namespace.create_namespace()
+                    new_ns.symbols_push(variables)
+                    bytecode += self._compile(new_ns, code)
+
             elif isinstance(expr, Block):
                 if func.builtin:
                     # builtin block
