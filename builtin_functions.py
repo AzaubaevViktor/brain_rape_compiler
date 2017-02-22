@@ -10,9 +10,9 @@ class _Add(Function):
         addr = variables['addr'].value
         value = variables['value'].value
         return [
-            B(B.MOVE, addr),
-            B(B.PLUS, value),
-            B(B.MOVE, -addr)
+            B(">", addr),
+            B("+", value),
+            B("<", addr)
         ]
 
 add = _Add(
@@ -32,14 +32,14 @@ class _Mov(Function):
         to_addr = variables['to_addr'].value
         from_addr = variables['from_addr'].value
         return [
-            B(B.MOVE, from_addr - 0),  # Move to from_addr
-            B(B.CYCLE_IN, 0),  # While *from_addr not null, do
-            B(B.PLUS, -1),  # *from_addr -= 1
-            B(B.MOVE, to_addr - from_addr),  # go to to_addr
-            B(B.PLUS, 1),  # *to_addr += 1
-            B(B.MOVE, from_addr - to_addr),  # go to from_addr
-            B(B.CYCLE_OUT, 0),  # if *from_addr == null then end
-            B(B.MOVE, 0 - from_addr)  # move to 0
+            B(">", from_addr - 0),  # Move to from_addr
+            B("[", 0),  # While *from_addr not null, do
+            B("-", 1),  # *from_addr -= 1
+            B(">", to_addr - from_addr),  # go to to_addr
+            B("+", 1),  # *to_addr += 1
+            B(">", from_addr - to_addr),  # go to from_addr
+            B("]", 0),  # if *from_addr == null then end
+            B(">", 0 - from_addr)  # move to 0
         ]
 
 mov = _Mov(
@@ -60,16 +60,16 @@ class _Mov2(Function):
         to2_addr = variables['to2_addr'].value
         from_addr = variables['from_addr'].value
         return [
-            B(B.MOVE, from_addr - 0),  # Move to from_addr
-            B(B.CYCLE_IN),  # While *from_addr not null, do
-            B(B.PLUS, -1),  # *from_addr -= 1
-            B(B.MOVE, to1_addr - from_addr),  # go to to1_addr
-            B(B.PLUS, 1),  # *to1_addr += 1
-            B(B.MOVE, to2_addr - to1_addr),  # goto to2_addr
-            B(B.PLUS, 1),  # *to2_addr += 1
-            B(B.MOVE, from_addr - to2_addr),  # go to from_addr
-            B(B.CYCLE_OUT),  # if *from_addr == null then end
-            B(B.MOVE, 0 - from_addr)  # move to 0
+            B(">", from_addr - 0),  # Move to from_addr
+            B("["),  # While *from_addr not null, do
+            B("-", 1),  # *from_addr -= 1
+            B(">", to1_addr - from_addr),  # go to to1_addr
+            B("+", 1),  # *to1_addr += 1
+            B(">", to2_addr - to1_addr),  # goto to2_addr
+            B("+", 1),  # *to2_addr += 1
+            B(">", from_addr - to2_addr),  # go to from_addr
+            B("]"),  # if *from_addr == null then end
+            B(">", 0 - from_addr)  # move to 0
         ]
 
 mov2 = _Mov2(
@@ -89,11 +89,11 @@ class _Null(Function):
     def compile(self, variables: Dict[str, AbstractBrType]):
         addr = variables['addr'].value
         return [
-            B(B.MOVE, addr - 0),   # goto addr
-            B(B.CYCLE_IN),   # [
-            B(B.PLUS, -1),     # -
-            B(B.CYCLE_OUT),  # ]
-            B(B.MOVE, 0 - addr)   # goto 0
+            B(">", addr - 0),   # goto addr
+            B("["),   # [
+            B("-", 1),     # -
+            B("]"),  # ]
+            B(">", 0 - addr)   # goto 0
         ]
 
 null = _Null(
@@ -111,9 +111,9 @@ class _Print(Function):
     def compile(self, variables: Dict[str, AbstractBrType]):
         addr = variables['addr'].value
         return [
-            B(B.MOVE, addr - 0),    # goto addr
-            B(B.PRINT),           # print from addr
-            B(B.MOVE, 0 - addr)     # goto 0
+            B(">", addr - 0),    # goto addr
+            B("."),           # print from addr
+            B(">", 0 - addr)     # goto 0
         ]
 
 _print = _Print(
@@ -131,9 +131,9 @@ class _Read(Function):
     def compile(self, variables: Dict[str, AbstractBrType]):
         addr = variables['addr'].value
         return [
-            B(B.MOVE, addr - 0),
-            B(B.READ),
-            B(B.MOVE, 0 - addr)
+            B(">", addr - 0),
+            B(","),
+            B(">", 0 - addr)
         ]
 
 
