@@ -1,5 +1,4 @@
-import traceback
-from typing import Dict, List, Tuple
+from typing import List
 
 from br_exceptions.base import BaseBrException
 
@@ -43,11 +42,22 @@ class ParserArgumentCheckTypeException(ParserArgumentCheckException):
                "{}".format(type(self.exc), self.exc)
 
 
-class ParserFunctionNotFoundException(BaseParserException):
+class ParserSymbolNotFoundException(BaseParserException):
+    _what = "символ"
+
     def __init__(self, token: 'Token'):
         self.token = token
 
     def __str__(self):
-        return "Невозможно найти функцию с именем `{}`".format(
+        return "Невозможно найти {} с именем `{}`".format(
+            self._what,
             self.token.text
         )
+
+
+class ParserFunctionNotFoundException(ParserSymbolNotFoundException):
+    _what = "функцию"
+
+
+class ParserVariableNotFoundException(ParserSymbolNotFoundException):
+    _what = "переменную"

@@ -1,5 +1,6 @@
 import abc
 import re
+from typing import Any
 
 from br_exceptions.types import *
 from br_lexer import Token
@@ -7,7 +8,7 @@ from br_parser import FunctionLifeTime
 
 
 class AbstractBrType(metaclass=abc.ABCMeta):
-
+    """ Умеет парсить и хранить в себе значение определённого типа """
     type_name = None
 
     def __init__(self, raw: Token):
@@ -16,7 +17,7 @@ class AbstractBrType(metaclass=abc.ABCMeta):
 
     @classmethod
     @abc.abstractclassmethod
-    def _parse(cls, text):
+    def _parse(cls, text) -> Any:
         pass
 
     def __str__(self):

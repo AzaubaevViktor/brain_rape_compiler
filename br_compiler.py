@@ -8,7 +8,7 @@ from builtin_functions import builtin_functions
 from bytecode import ByteCode
 
 
-class BfCompiler:
+class BrCompiler:
     def __init__(self, file_name):
         self.file_name = file_name
         self.file = None
@@ -72,6 +72,10 @@ class BfCompiler:
 
             line_n += 1
         self.file.close()
+        # add last line for _block_process
+        self.lines.append(
+            self._get_line(line_n, "nope")
+        )
 
     def _block_process(self):
         """ Обрабатывает self.lines и где надо преобразовывает их в блоки"""
@@ -102,7 +106,7 @@ class BfCompiler:
     def _init_default_namespace(self):
         """ Создаёт первичный NameSpace"""
         ns = NameSpace(None)
-        ns.functions_push(builtin_functions)
+        ns.symbols_push(builtin_functions)
         self.namespace = ns
 
     def old_line_compile(self) -> List[Tuple[List[ByteCode], Line]]:
@@ -137,7 +141,7 @@ class BfCompiler:
                  ) -> List[Tuple[List[ByteCode], Expression]]:
         bytecode = []
         for expr in lines:
-            func = namespace.get_func_by_token(expr.func_token)
+            func = namespace.get_func(expr.func_token)
             if isinstance(expr, Line):
                 if func.builtin:
                     # Builtin no block
@@ -145,7 +149,8 @@ class BfCompiler:
                     code = func.compile(variables)
                     bytecode.append((code, func, expr))
                 else:
-                    # WOW WOW я остановился тут
+                    # not builtin no block
+                    variables = func.check_args(expr.params)
                     pass
             elif isinstance(expr, Block):
                 if func.builtin:
@@ -180,38 +185,3 @@ class BfCompiler:
         # func: builtin and not block
         #    func.compile
         pass
-
-
-if __name__ == "__main__":
-    compiler = BfCompiler('br_files/test_macro.br')
-    print("==== LINES: ====")
-    for expr in compiler.lines:
-        print(expr)
-
-    print(compiler.block)
-
-    print(
-        "\n".join(
-            compiler.block.debug_print()
-        )
-    )
-
-    bytecode = compiler.compile()
-    print()
-    print("==== BYTECODE: ====")
-    for code, func, expr in bytecode:
-        for act in code:
-            print(act, end=" ")
-        print()
-        print(func)
-        print(expr)
-        print("------")
-
-    print()
-    print("==== BRAINFUCK ====")
-    for code, *_ in bytecode:
-        for act in code:
-            print(act.compile(), end="")
-        print()
-    print()
-

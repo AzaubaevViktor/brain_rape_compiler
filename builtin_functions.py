@@ -1,15 +1,35 @@
 import sys
+import traceback
+from typing import Dict
 
 from br_exceptions.parser import *
 from br_lexer import Token, Expression
-from br_parser import Function, Argument, FunctionLifeTime, FunctionType, NameSpace
-from br_types import AbstractBrType, IntBrType, IdentifierBrType, BrTypeBrType, \
+from br_parser import Function, Argument, FunctionLifeTime, FunctionType, NameSpace, \
+    Variable
+from br_types import IntBrType, IdentifierBrType, BrTypeBrType, \
     FunctionLifeTimeBrType
 from bytecode import ByteCode as B
 
 
+class _Nope(Function):
+    def compile(self,
+                variables: Dict[str, Variable]
+                ):
+        return [
+            B("#", "Nope func")
+        ]
+
+nope = _Nope(
+    'nope',
+    [],
+    FunctionType.NO_BLOCK,
+    FunctionLifeTime.GLOBAL,
+    builtin=True
+)
+
+
 class _Add(Function):
-    def compile(self, variables: Dict[str, AbstractBrType]):
+    def compile(self, variables: Dict[str, Variable]):
         addr = variables['addr'].value
         value = variables['value'].value
         return [
@@ -31,7 +51,7 @@ add = _Add(
 
 
 class _Mov(Function):
-    def compile(self, variables: Dict[str, AbstractBrType]):
+    def compile(self, variables: Dict[str, Variable]):
         to_addr = variables['to_addr'].value
         from_addr = variables['from_addr'].value
         return [
@@ -58,7 +78,7 @@ mov = _Mov(
 
 
 class _Mov2(Function):
-    def compile(self, variables: Dict[str, AbstractBrType]):
+    def compile(self, variables: Dict[str, Variable]):
         to1_addr = variables['to1_addr'].value
         to2_addr = variables['to2_addr'].value
         from_addr = variables['from_addr'].value
@@ -89,7 +109,7 @@ mov2 = _Mov2(
 
 
 class _Null(Function):
-    def compile(self, variables: Dict[str, AbstractBrType]):
+    def compile(self, variables: Dict[str, Variable]):
         addr = variables['addr'].value
         return [
             B(">", addr - 0),   # goto addr
@@ -111,7 +131,7 @@ null = _Null(
 
 
 class _Print(Function):
-    def compile(self, variables: Dict[str, AbstractBrType]):
+    def compile(self, variables: Dict[str, Variable]):
         addr = variables['addr'].value
         return [
             B(">", addr - 0),    # goto addr
@@ -131,7 +151,7 @@ _print = _Print(
 
 
 class _Read(Function):
-    def compile(self, variables: Dict[str, AbstractBrType]):
+    def compile(self, variables: Dict[str, Variable]):
         addr = variables['addr'].value
         return [
             B(">", addr - 0),
@@ -166,7 +186,7 @@ _main = _Main(
 
 
 class _Macro(Function):
-    def check_args(self, params: List[Token]) -> Dict[str, AbstractBrType]:
+    def check_args(self, params: List[Token]) -> Dict[str, Variable]:
         variables = {}
         if len(params) < 2:
             raise ParserArgumentCheckLenException(self, params, 2)
@@ -200,15 +220,15 @@ class _Macro(Function):
         return variables
 
     def compile_block(self,
-                      variables: Dict[str, AbstractBrType],
+                      variables: Dict[str, Variable],
                       block_inside: List[Expression] or None = None,
                       namespace: NameSpace = None
                       ):
         function_name = variables['name'].value
         arguments = variables['arguments']  # type: List[Argument]
         lifetime = variables['lifetime'].value
-        # Because variables['arguments'] List[Argument], not AbstractBrType
-        namespace.function_push(
+        # Because variables['arguments'] List[Argument], not Variable
+        namespace.symbol_push(
             Function(
                 function_name,
                 arguments,
@@ -233,6 +253,7 @@ macro = _Macro(
 )
 
 builtin_functions = [
+    nope,
     add,
     mov,
     mov2,
