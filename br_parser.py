@@ -5,16 +5,15 @@ from typing import List, Dict, Type, TypeVar, Tuple
 from br_exceptions.parser import ParserArgumentCheckLenException, ParserArgumentCheckTypeException, \
     ParserFunctionNotFoundException
 from br_lexer import Line, Token, Block
-from br_types import AbstractBrType
 from bytecode import ByteCode
 
 
 class Argument:
-    def __init__(self, name: str, _type: Type[AbstractBrType]):
+    def __init__(self, name: str, _type: Type['AbstractBrType']):
         self.name = name
         self.type = _type
 
-    def apply(self, token: Token) -> AbstractBrType:
+    def apply(self, token: Token) -> 'AbstractBrType':
         return self.type(token)
 
 
@@ -46,7 +45,7 @@ class BrFunction:
         self.code = code
         self.builtin = builtin
 
-    def check_args(self, params: List[Token]) -> Dict[str, AbstractBrType]:
+    def check_args(self, params: List[Token]) -> Dict[str, 'AbstractBrType']:
         variables = {}
         if len(self.arguments) != len(params):
             raise ParserArgumentCheckLenException(
@@ -65,12 +64,12 @@ class BrFunction:
         return variables
 
     def compile(self,
-                variables: Dict[str, AbstractBrType]
+                variables: Dict[str, 'AbstractBrType']
                 ) -> List[ByteCode]:
         raise NotImplemented()
 
     def compile_block(self,
-                      variables: Dict[str, AbstractBrType],
+                      variables: Dict[str, 'AbstractBrType'],
                       block_inside: List[Line or Block] or None = None,
                       namespace: 'NameSpace' = None
                       ) -> List[ByteCode]:

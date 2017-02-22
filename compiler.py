@@ -16,8 +16,8 @@ class BfCompiler:
         self.block = None  # type: Block
         self._lines_process()
         self._block_process()
-        self.namespaces = []  # type: List[NameSpace]
-        self._create_default_namespace()
+        self.namespace = None  # type: NameSpace or None
+        self._init_default_namespace()
 
     @staticmethod
     def _get_line_level(s):
@@ -99,17 +99,17 @@ class BfCompiler:
                 # level up more then 2
                 raise LexerBlockLevelErrorException(cur_line, next_line)
 
-    def _create_default_namespace(self):
+    def _init_default_namespace(self):
         """ Создаёт первичный NameSpace"""
         ns = NameSpace(None)
         ns.functions_push(builtin_functions)
-        self.namespaces.append(ns)
+        self.namespace = ns
 
     def old_line_compile(self) -> List[Tuple[List[ByteCode], Line]]:
         """ Старая версия итоговой компиляции для одного уровня вложенности """
         bytecode = []
         for line in self.lines:
-            ns = self.namespaces[-1]
+            ns = self.namespace[-1]
             func = ns.get_func_by_token(line.func_token)
             if func.builtin:
                 #  Builtin NoBlock function
@@ -124,7 +124,15 @@ class BfCompiler:
                 pass
         return bytecode
 
-    def compile(self,
+    def compile(self):
+        self._init_default_namespace()
+        return self._compile(
+            self.namespace,
+            self.block.block_lines
+        )
+
+
+    def _compile(self,
                 namespace: NameSpace,
                 lines: List[Line or Block]
                 ) -> List[Tuple[List[ByteCode], Line or Block]]:
@@ -133,18 +141,22 @@ class BfCompiler:
             func = namespace.get_func_by_token(expr.func_token)
             if isinstance(expr, Line):
                 if func.builtin:
+                    # Builtin no block
                     variables = func.check_args(expr.params)
                     code = func.compile(variables)
                     bytecode.append((code, expr))
                 else:
+                    # not builtin no block
                     pass
             elif isinstance(expr, Block):
                 if func.builtin:
+                    # builtin block
                     pass
                 else:
+                    # not builtin block
                     pass
 
-        return []
+        return bytecode
 
         # func: not builtin and block
         #   new namespace
@@ -165,7 +177,7 @@ class BfCompiler:
 
 
 if __name__ == "__main__":
-    compiler = BfCompiler('br_files/test_block.br')
+    compiler = BfCompiler('br_files/test.br')
     print("==== LINES: ====")
     for line in compiler.lines:
         print(line)
@@ -178,21 +190,21 @@ if __name__ == "__main__":
         )
     )
 
-    # bytecode = compiler.compile()
-    # print()
-    # print("==== BYTECODE: ====")
-    # for code, line in bytecode:
-    #     for act in code:
-    #         print(act, end=" ")
-    #     print()
-    #     print(line)
-    #     print("------")
-    #
-    # print()
-    # print("==== BRAINFUCK ====")
-    # for code, line in bytecode:
-    #     for act in code:
-    #         print(act.compile(), end="")
-    #     print()
-    # print()
+    bytecode = compiler.compile()
+    print()
+    print("==== BYTECODE: ====")
+    for code, line in bytecode:
+        for act in code:
+            print(act, end=" ")
+        print()
+        print(line)
+        print("------")
+
+    print()
+    print("==== BRAINFUCK ====")
+    for code, line in bytecode:
+        for act in code:
+            print(act.compile(), end="")
+        print()
+    print()
 

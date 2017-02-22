@@ -29,9 +29,10 @@ class IntBrType(AbstractBrType):
 # Должен стоять последним, так как смотрит все модули выше него
 class BrTypeBrType(AbstractBrType):
     _type_name = "type"
-    _types = {val: globals()[val] for val in dir()
-              if issubclass(globals()[val], AbstractBrType)
-              and globals()[val] != AbstractBrType
+    _types = {name: cl for name, cl in globals().items()
+              if type(cl) == type and
+              issubclass(cl, AbstractBrType)
+              and cl != AbstractBrType
               }
 
     def _parse(self):
