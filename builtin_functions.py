@@ -7,7 +7,7 @@ from br_lexer import Token, Expression
 from br_parser import Function, Argument, FunctionLifeTime, FunctionType, NameSpace, \
     Variable
 from br_types import IntBrType, IdentifierBrType, BrTypeBrType, \
-    FunctionLifeTimeBrType
+    FunctionLifeTimeBrType, AddressBrType
 from bytecode import ByteCode as B
 
 
@@ -29,8 +29,10 @@ nope = _Nope(
 
 
 class _Add(Function):
-    def compile(self, variables: Dict[str, Variable]):
-        addr = variables['addr'].value
+    def compile(self,
+                variables: Dict[str, Variable],
+                namespace: 'NameSpace' = None):
+        addr = namespace.get_address_value(variables['addr'])
         value = variables['value'].value
         return [
             B(">", addr),
@@ -41,7 +43,7 @@ class _Add(Function):
 add = _Add(
     '_add',
     [
-        Argument('addr', IntBrType),
+        Argument('addr', AddressBrType),
         Argument('value', IntBrType)
     ],
     FunctionType.NO_BLOCK,
@@ -51,7 +53,9 @@ add = _Add(
 
 
 class _Mov(Function):
-    def compile(self, variables: Dict[str, Variable]):
+    def compile(self,
+                variables: Dict[str, Variable],
+                namespace: 'NameSpace' = None):
         to_addr = variables['to_addr'].value
         from_addr = variables['from_addr'].value
         return [
@@ -68,8 +72,8 @@ class _Mov(Function):
 mov = _Mov(
     '_mov',
     [
-        Argument('to_addr', IntBrType),
-        Argument('from_addr', IntBrType)
+        Argument('to_addr', AddressBrType),
+        Argument('from_addr', AddressBrType)
     ],
     FunctionType.NO_BLOCK,
     FunctionLifeTime.GLOBAL,
@@ -78,7 +82,9 @@ mov = _Mov(
 
 
 class _Mov2(Function):
-    def compile(self, variables: Dict[str, Variable]):
+    def compile(self,
+                variables: Dict[str, Variable],
+                namespace: 'NameSpace' = None):
         to1_addr = variables['to1_addr'].value
         to2_addr = variables['to2_addr'].value
         from_addr = variables['from_addr'].value
@@ -98,9 +104,9 @@ class _Mov2(Function):
 mov2 = _Mov2(
     '_mov2',
     [
-        Argument('to1_addr', IntBrType),
-        Argument('to2_addr', IntBrType),
-        Argument('from_addr', IntBrType)
+        Argument('to1_addr', AddressBrType),
+        Argument('to2_addr', AddressBrType),
+        Argument('from_addr', AddressBrType)
     ],
     FunctionType.NO_BLOCK,
     FunctionLifeTime.GLOBAL,
@@ -109,7 +115,9 @@ mov2 = _Mov2(
 
 
 class _Null(Function):
-    def compile(self, variables: Dict[str, Variable]):
+    def compile(self,
+                variables: Dict[str, Variable],
+                namespace: 'NameSpace' = None):
         addr = variables['addr'].value
         return [
             B(">", addr - 0),   # goto addr
@@ -122,7 +130,7 @@ class _Null(Function):
 null = _Null(
     '_null',
     [
-        Argument('addr', IntBrType)
+        Argument('addr', AddressBrType)
     ],
     FunctionType.NO_BLOCK,
     FunctionLifeTime.GLOBAL,
@@ -131,7 +139,9 @@ null = _Null(
 
 
 class _Print(Function):
-    def compile(self, variables: Dict[str, Variable]):
+    def compile(self,
+                variables: Dict[str, Variable],
+                namespace: 'NameSpace' = None):
         addr = variables['addr'].value
         return [
             B(">", addr - 0),    # goto addr
@@ -142,7 +152,7 @@ class _Print(Function):
 _print = _Print(
     '_print',
     [
-        Argument('addr', IntBrType)
+        Argument('addr', AddressBrType)
     ],
     FunctionType.NO_BLOCK,
     FunctionLifeTime.GLOBAL,
@@ -151,7 +161,9 @@ _print = _Print(
 
 
 class _Read(Function):
-    def compile(self, variables: Dict[str, Variable]):
+    def compile(self,
+                variables: Dict[str, Variable],
+                namespace: 'NameSpace' = None):
         addr = variables['addr'].value
         return [
             B(">", addr - 0),
@@ -163,7 +175,7 @@ class _Read(Function):
 _read = _Read(
     '_read',
     [
-        Argument('addr', IntBrType)
+        Argument('addr', AddressBrType)
     ],
     FunctionType.NO_BLOCK,
     FunctionLifeTime.GLOBAL,

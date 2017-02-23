@@ -1,0 +1,4 @@
+macro global test int ARG
+    _add ARG 100
+
+test 5

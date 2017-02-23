@@ -1,19 +1,19 @@
-_add 0 5
+_add :0 5
 
-macro global test
-    _add 5 6
-    _mov 6 5
+macro global test int ARG
+    _add ARG 100
+    _mov :6 :5
 
     macro global test2
-        _add 1 2
-        _mov 2 1
+        _add :1 2
+        _mov :2 :1
 
     test2
 
-test
+test 100
 
 macro global test3
-    test
-    test
+    test 1
+    test 1
 
 test3

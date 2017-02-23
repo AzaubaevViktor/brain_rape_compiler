@@ -9,11 +9,15 @@ from br_parser import FunctionLifeTime
 
 class AbstractBrType(metaclass=abc.ABCMeta):
     """ Умеет парсить и хранить в себе значение определённого типа """
-    type_name = None
+    name = None
 
     def __init__(self, raw: Token):
         self.token = raw
-        self.value = self._parse(raw.text)
+        try:
+            self.value = self._parse(raw)
+        except BaseTypesException as e:
+            e.token = self.token
+            raise e
 
     @classmethod
     @abc.abstractclassmethod
@@ -21,50 +25,75 @@ class AbstractBrType(metaclass=abc.ABCMeta):
         pass
 
     def __str__(self):
-        return "Type<{}>:{}".format(self.type_name, self.value)
+        return "Type<{}>:{}".format(self.name, self.value)
 
 
 class IntBrType(AbstractBrType):
-    type_name = "int"
+    name = "int"
 
     @classmethod
-    def _parse(cls, text):
+    def _parse(cls, token: Token):
+        text = token.text
         return int(text)
+
+
+class IdentifierBrType(AbstractBrType):
+    name = "identifier"
+    _regexp = re.compile(r'[A-z]\w*')
+
+    @classmethod
+    def _parse(cls, token: Token):
+        text = token.text
+        match = cls._regexp.match(text)
+        if not match:
+            raise IdentifierNameErrorException(text)
+        span = match.span()
+        if (span[1] - span[0]) > len(text):
+            raise IdentifierNameErrorException(text)
+        return text
+
+
+class AddressBrType(AbstractBrType):
+    name = "address"
+    _regexp = re.compile(r':(\d+)')
+
+    def _parse(cls, token: Token) -> int or IdentifierBrType:
+        text = token.text
+        # try to find `:123...`
+        try:
+            match = cls._regexp.match(text)
+            if not match:
+                raise IdentifierNameErrorException(text)
+            span = match.span()
+            if (span[1] - span[0]) > len(text):
+                raise IdentifierNameErrorException(text)
+            return int(text[1:])
+        except Exception:
+            try:
+                data = IdentifierBrType(token)
+            except Exception as e:
+                raise e
+            return data
 
 
 # Должен стоять последним, так как смотрит все модули выше него
 class BrTypeBrType(AbstractBrType):
     _type_name = "type"
-    _types = {name: cl for name, cl in globals().items()
-              if type(cl) == type and
+    _types = {cl.name: cl for name, cl in globals().items()
+              if isinstance(cl, type) and
               issubclass(cl, AbstractBrType)
               and cl != AbstractBrType
               }
 
     @classmethod
-    def _parse(cls, text):
-        type_name = text
+    def _parse(cls,  token: Token):
+        type_name = token.text
         tp = cls._types.get(type_name, None)
         if not tp:
             raise TypeNameErrorException(type_name)
         return tp
 
-
 # Здесь внутренние типы, которые нельзя использовать в программе
-class IdentifierBrType(AbstractBrType):
-    type_name = "func_name"
-    _regexp = re.compile(r'[A-z]\w*')
-
-    @classmethod
-    def _parse(cls, text):
-        name = text
-        match = cls._regexp.match(name)
-        if not match:
-            raise IdentifierNameErrorException(name)
-        span = match.span()
-        if (span[1] - span[0]) > len(name):
-            raise IdentifierNameErrorException(name)
-        return name
 
 
 class FunctionLifeTimeBrType(AbstractBrType):
@@ -72,8 +101,8 @@ class FunctionLifeTimeBrType(AbstractBrType):
     _values = {i.name.lower(): i for i in FunctionLifeTime}
 
     @classmethod
-    def _parse(cls, text):
-        name = text
+    def _parse(cls, token: Token):
+        name = token.text
         life_time = cls._values.get(name, None)
         if not life_time:
             raise FunctionLifeTimeErrorException(name)

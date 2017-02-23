@@ -5,6 +5,7 @@ from br_lexer import Block, Expression
 from br_parser import Token, Line, NameSpace, FunctionType
 from br_exceptions.lexer import LexerLevelErrorException, LexerBlockLevelErrorException
 from builtin_functions import builtin_functions
+from builtin_variables import builtin_variables
 from bytecode import ByteCode
 
 
@@ -107,6 +108,7 @@ class BrCompiler:
         """ Создаёт первичный NameSpace"""
         ns = NameSpace(None)
         ns.symbols_push(builtin_functions)
+        ns.symbols_push(builtin_variables)
         self.namespace = ns
 
     def old_line_compile(self) -> List[Tuple[List[ByteCode], Line]]:
@@ -146,14 +148,14 @@ class BrCompiler:
                 if func.builtin:
                     # Builtin no block
                     variables = func.check_args(expr.params)
-                    code = func.compile(variables)
+                    code = func.compile(variables, namespace)
                     bytecode.append((code, func, expr))
                 else:
                     # not builtin no block
                     variables = func.check_args(expr.params)
                     code = func.code
                     new_ns = namespace.create_namespace()
-                    new_ns.symbols_push(variables)
+                    new_ns.symbols_push(variables.values())
                     bytecode += self._compile(new_ns, code)
 
             elif isinstance(expr, Block):

@@ -44,7 +44,12 @@ class Argument:
         return Variable(self.name, self.var_type(token))
 
     def __repr__(self):
-        return "Argument<{self.var_type.__name__} {self.name}>".format(
+        return "Argument<{about}>".format(
+            about=str(self)
+        )
+
+    def __str__(self):
+        return "{self.var_type.__name__} {self.name}".format(
             self=self
         )
 
@@ -78,6 +83,7 @@ class Function(Symbol):
         self.builtin = builtin
 
     def check_args(self, params: List[Token]) -> Dict[str, Variable]:
+        # TODO: Добавить проверку на типы переменных
         variables = {}
         if len(self.arguments) != len(params):
             raise ParserArgumentCheckLenException(
@@ -96,7 +102,8 @@ class Function(Symbol):
         return variables
 
     def compile(self,
-                variables: Dict[str, Variable]
+                variables: Dict[str, Variable],
+                namespace: 'NameSpace' = None
                 ) -> List[ByteCode]:
         return NotImplemented
 
@@ -121,7 +128,7 @@ class Function(Symbol):
             type=self.type.name.lower(),
             lifetime=self.lifetime.name.lower(),
             name=self.name,
-            arguments=self.arguments,
+            arguments=", ".join([str(arg) for arg in self.arguments] or ["No Arguments"]),
             lines_len=lines_len
         )
         return about
@@ -158,6 +165,14 @@ class NameSpace:
         if not isinstance(var, Variable):
             raise ParserVariableNotFoundException(token)
         return var
+
+    def get_address_value(self, addr: 'AddressBrType') -> int:
+        val = addr.value
+        from br_types import IdentifierBrType
+        if isinstance(val, IdentifierBrType):
+            return self.get_var(val.token).value
+        else:
+            return addr.value
 
     def create_namespace(self):
         ns = NameSpace(self)
