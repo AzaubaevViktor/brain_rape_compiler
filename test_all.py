@@ -30,7 +30,8 @@ def file_execute(file_name, *args):
     # tests
     for test in memory_tests:
         for tv, mv in zip(test, interpreter.memory):
-            assert -1 != tv and tv == mv
+            if -1 != tv:
+                assert tv == mv
 
     assert interpreter.memory == memory_dict_test
 
@@ -39,7 +40,7 @@ def file_execute(file_name, *args):
 
 
 def test_files():
-    file_names = glob.glob("./test_files/*.br")
+    file_names = glob.glob("./test_files/*/*.br", recursive=True)
 
     for file_name in file_names:
         args = get_tests(file_name)

@@ -19,7 +19,7 @@ def get_tests(file_name):
         for line in lines:
             if "#!" != line[:2]:
                 continue
-            tokens = line.split(" ")[1:]
+            tokens = clear_list(line.split(" ")[1:])
             if "test_MEMORYL" == tokens[0]:
                 memory_tests.append(
                     [int(x) if x != "_" else -1 for x in tokens[1:]]

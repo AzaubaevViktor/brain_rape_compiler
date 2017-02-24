@@ -1,0 +1,9 @@
+_read :5
+_read :4
+_read :3
+_print :3
+_print :4
+_print :5
+
+#! test_INPUT "abc"
+#! test_OUTPUT "cba"

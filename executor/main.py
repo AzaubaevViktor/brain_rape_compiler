@@ -36,12 +36,20 @@ class Memory:
         while key >= self.cur_len:
             self.cur_len += self.CHUNK
             self.data += [self.DEFAULT] * self.CHUNK
-        self.data[key] = value
+        self.data[key] = value % 256
 
     def __eq__(self, other: dict):
         for k, v in other.items():
             assert self[k] == v
         return True
+
+    def get_items(self):
+        d = {}
+        for k in range(self.cur_len):
+            v = self[k]
+            if v != 0:
+                d[k] = v
+        return d
 
     def __str__(self):
         return str(self.data)

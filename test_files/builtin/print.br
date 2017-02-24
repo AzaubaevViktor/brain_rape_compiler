@@ -1,0 +1,12 @@
+_add :1 104
+_add :2 101
+_add :3 108
+_add :4 111
+
+_print :1
+_print :2
+_print :3
+_print :3
+_print :4
+
+#! test_OUTPUT "hello"
