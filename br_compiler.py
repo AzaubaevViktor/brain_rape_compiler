@@ -147,7 +147,7 @@ class BrCompiler:
             if isinstance(expr, Line):
                 if func.builtin:
                     # Builtin no block
-                    variables = func.check_args(expr.params)
+                    variables = func.check_args(expr.params, namespace)
                     code = func.compile(variables, namespace)
                     bytecode.append((code, func, expr))
                 else:

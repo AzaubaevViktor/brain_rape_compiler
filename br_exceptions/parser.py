@@ -42,6 +42,24 @@ class ParserArgumentCheckTypeException(ParserArgumentCheckException):
                "{}".format(type(self.exc), self.exc)
 
 
+class ParserArgumentTypeEqException(BaseParserException):
+    def __init__(self,
+                 type1: 'BrType',
+                 type2: 'BrType'
+                 ):
+        self.type1 = type1
+        self.type2 = type2
+
+    def __str__(self):
+        return "Несовместимые типы. " \
+               "Ожидается {}, " \
+               "передано {}".format(
+            self.type1,
+            self.type2
+        )
+
+
+
 class ParserSymbolNotFoundException(BaseParserException):
     _what = "символ"
 

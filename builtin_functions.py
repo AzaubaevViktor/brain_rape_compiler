@@ -32,7 +32,7 @@ class _Add(Function):
     def compile(self,
                 variables: Dict[str, Variable],
                 namespace: 'NameSpace' = None):
-        addr = namespace.get_address_value(variables['addr'])
+        addr = variables['addr'].value
         value = variables['value'].value
         return [
             B(">", addr),

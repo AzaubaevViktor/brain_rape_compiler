@@ -4,7 +4,8 @@ from typing import List, Dict, Type, TypeVar, Tuple, Any
 
 from br_exceptions.parser import ParserArgumentCheckLenException, ParserArgumentCheckTypeException, \
     ParserSymbolNotFoundException, ParserFunctionNotFoundException, \
-    ParserVariableNotFoundException
+    ParserVariableNotFoundException, ParserArgumentTypeEqException
+from br_exceptions.types import BaseTypesException
 from br_lexer import Line, Token,  Expression
 from bytecode import ByteCode
 
@@ -40,8 +41,18 @@ class Argument:
         self.name = name
         self.var_type = var_type
 
-    def apply(self, token: Token) -> Variable:
-        return Variable(self.name, self.var_type(token))
+    def apply(self, token: Token, namespace: 'NameSpace' = None) -> Variable:
+        try:
+            value_type = self.var_type(token)
+        except BaseTypesException as e:
+            from br_types import IdentifierBrType
+            identifier = IdentifierBrType(token)
+            # raise Value or Identifier Exception
+            value_type = namespace.get_var(identifier).value_type
+        if isinstance(value_type, self.var_type):
+            return Variable(self.name, value_type)
+        else:
+            raise ParserArgumentTypeEqException(self.var_type, type(value_type))
 
     def __repr__(self):
         return "Argument<{about}>".format(
@@ -82,7 +93,10 @@ class Function(Symbol):
         self.code = code
         self.builtin = builtin
 
-    def check_args(self, params: List[Token]) -> Dict[str, Variable]:
+    def check_args(self,
+                   params: List[Token],
+                   namespace: 'NameSpace' = None
+                   ) -> Dict[str, Variable]:
         # TODO: Добавить проверку на типы переменных
         variables = {}
         if len(self.arguments) != len(params):
@@ -92,7 +106,7 @@ class Function(Symbol):
             )
         try:
             for arg, var in zip(self.arguments, params):
-                variables[arg.name] = arg.apply(var)
+                variables[arg.name] = arg.apply(var, namespace)
         except Exception as e:
             raise ParserArgumentCheckTypeException(
                 self,
@@ -160,10 +174,10 @@ class NameSpace:
             raise ParserFunctionNotFoundException(token)
         return func
 
-    def get_var(self, token: Token):
-        var = self[token]
+    def get_var(self, identifier: 'IdentifierBrType'):
+        var = self[identifier.token]
         if not isinstance(var, Variable):
-            raise ParserVariableNotFoundException(token)
+            raise ParserVariableNotFoundException(identifier.token)
         return var
 
     def get_address_value(self, addr: 'AddressBrType') -> int:

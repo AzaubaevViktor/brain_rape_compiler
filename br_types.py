@@ -4,24 +4,26 @@ from typing import Any
 
 from br_exceptions.types import *
 from br_lexer import Token
-from br_parser import FunctionLifeTime
+from br_parser import FunctionLifeTime, NameSpace
 
 
 class AbstractBrType(metaclass=abc.ABCMeta):
     """ Умеет парсить и хранить в себе значение определённого типа """
     name = None
 
-    def __init__(self, raw: Token):
-        self.token = raw
+    def __init__(self, token: Token, namespace: NameSpace = None):
+        self.token = token  # Текст, представляющий тип
+        self.text = self.token.text
+        self.namespace = namespace
+        self.value = None  # значение типа
         try:
-            self.value = self._parse(raw)
+            self._parse()
         except BaseTypesException as e:
             e.token = self.token
             raise e
 
-    @classmethod
     @abc.abstractclassmethod
-    def _parse(cls, text) -> Any:
+    def _parse(self):
         pass
 
     def __str__(self):
@@ -31,49 +33,38 @@ class AbstractBrType(metaclass=abc.ABCMeta):
 class IntBrType(AbstractBrType):
     name = "int"
 
-    @classmethod
-    def _parse(cls, token: Token):
-        text = token.text
-        return int(text)
+    def _parse(self):
+        self.value = int(self.token.text)
 
 
 class IdentifierBrType(AbstractBrType):
     name = "identifier"
     _regexp = re.compile(r'[A-z]\w*')
 
-    @classmethod
-    def _parse(cls, token: Token):
-        text = token.text
-        match = cls._regexp.match(text)
+    def _parse(self):
+        match = self._regexp.match(self.text)
         if not match:
-            raise IdentifierNameErrorException(text)
+            raise IdentifierNameErrorException(self.token)
         span = match.span()
-        if (span[1] - span[0]) > len(text):
-            raise IdentifierNameErrorException(text)
-        return text
+        if (span[1] - span[0]) > len(self.text):
+            raise IdentifierNameErrorException(self.token)
+        self.value = self.text
 
 
 class AddressBrType(AbstractBrType):
     name = "address"
-    _regexp = re.compile(r':(\d+)')
+    _addr_int_r = re.compile(r':(\d+)')
 
-    def _parse(cls, token: Token) -> int or IdentifierBrType:
-        text = token.text
+    def _parse(self):
         # try to find `:123...`
-        try:
-            match = cls._regexp.match(text)
-            if not match:
-                raise IdentifierNameErrorException(text)
-            span = match.span()
-            if (span[1] - span[0]) > len(text):
-                raise IdentifierNameErrorException(text)
-            return int(text[1:])
-        except Exception:
-            try:
-                data = IdentifierBrType(token)
-            except Exception as e:
-                raise e
-            return data
+        match = self._addr_int_r.match(self.text)
+        if not match:
+            raise IdentifierNameErrorException(self.token)
+        span = match.span()
+        if (span[1] - span[0]) > len(self.text):
+            raise IdentifierNameErrorException(self.token)
+        self.value = int(self.text[1:])
+
 
 
 # Должен стоять последним, так как смотрит все модули выше него
@@ -85,13 +76,12 @@ class BrTypeBrType(AbstractBrType):
               and cl != AbstractBrType
               }
 
-    @classmethod
-    def _parse(cls,  token: Token):
-        type_name = token.text
-        tp = cls._types.get(type_name, None)
+    def _parse(self):
+        type_name = self.text
+        tp = self._types.get(type_name, None)
         if not tp:
-            raise TypeNameErrorException(type_name)
-        return tp
+            raise TypeNameErrorException(self.token)
+        self.value = tp
 
 # Здесь внутренние типы, которые нельзя использовать в программе
 
@@ -100,10 +90,9 @@ class FunctionLifeTimeBrType(AbstractBrType):
     _type_name = "function_type"
     _values = {i.name.lower(): i for i in FunctionLifeTime}
 
-    @classmethod
-    def _parse(cls, token: Token):
-        name = token.text
-        life_time = cls._values.get(name, None)
+    def _parse(self):
+        name = self.text
+        life_time = self._values.get(name, None)
         if not life_time:
             raise FunctionLifeTimeErrorException(name)
-        return life_time
+        self.value = life_time

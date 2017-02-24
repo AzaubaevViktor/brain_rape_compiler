@@ -2,8 +2,8 @@ from br_exceptions.base import BaseBrException
 
 
 class BaseTypesException(BaseBrException):
-    def __init__(self, name, token=None):
-        self.name = name
+    def __init__(self, token=None):
+        self.name = token.text
         self.token = token
 
 
