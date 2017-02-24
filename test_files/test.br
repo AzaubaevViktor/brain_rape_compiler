@@ -1,0 +1,13 @@
+_add   :0    100
+_add :1 105 # put 'i' to :1
+_mov :2 :1     # mov 'i' from :1 to :2
+
+_mov2 :3 :4 :2
+# test
+_null :4
+_read :5
+_print :3
+_print :5
+
+#! test_INPUT "x"
+#! test_OUTPUT "ix"

@@ -1,4 +1,0 @@
-macro global test address ARG
-    _add ARG 100
-
-test :5
