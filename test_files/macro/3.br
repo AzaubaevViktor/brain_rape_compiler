@@ -1,0 +1,12 @@
+macro global first address a
+    _add a 1
+    macro global second address b
+        _add b 2
+        macro global third address c
+            _add c 3
+        third :0
+    second :1
+
+first :2
+
+#! test_MEMORYL 3 2 1

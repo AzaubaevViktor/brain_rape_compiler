@@ -1,0 +1,9 @@
+macro global first address res address b address c int d
+    _add res d
+    _add res 1
+    _mov2 b c res
+    _add c 1
+
+first :0 :1 :2 5
+
+#! test_MEMORY _ 6 7

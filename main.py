@@ -2,7 +2,7 @@ from br_compiler import BrCompiler
 
 
 if __name__ == "__main__":
-    compiler = BrCompiler('test_files/macro/2.br')
+    compiler = BrCompiler('test_files/macro/3.br')
     print("==== LINES: ====")
     for expr in compiler.lines:
         print(expr)

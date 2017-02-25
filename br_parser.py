@@ -104,8 +104,7 @@ class Function(Symbol):
                         raise ParserArgumentTypeEqException(arg.var_type,
                                                             type(variable.value_type))
 
-                except (IdentifierNameErrorException,
-                        ParserVariableNotFoundException) as e1:
+                except IdentifierNameErrorException:
                     # This is not identifier, try to parse directly
                     try:
                         variable = arg.apply(var_token)
