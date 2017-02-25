@@ -14,9 +14,12 @@ class AbstractBrType(metaclass=abc.ABCMeta):
     def __init__(self, token: Token,
                  value: Any = None):
         self.token = token  # Текст, представляющий тип
-        self.text = self.token.text
+        if self.token:
+            self.text = self.token.text
+        else:
+            self.text = "Token not found, maybe builtin definision?"
         self.value = value  # значение типа
-        if not self.value:
+        if self.value is None:
             try:
                 self._parse()
             except BaseTypesException as e:

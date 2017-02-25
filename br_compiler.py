@@ -152,7 +152,7 @@ class BrCompiler:
                     bytecode.append((code, func, expr))
                 else:
                     # not builtin no block
-                    variables = func.check_args(expr.params)
+                    variables = func.check_args(expr.params, namespace)
                     code = func.code
                     new_ns = namespace.create_namespace()
                     new_ns.symbols_push(variables.values())

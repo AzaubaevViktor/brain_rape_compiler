@@ -29,6 +29,9 @@ class Variable(Symbol):
     def value(self) -> Any:
         return self.value_type.value
 
+    def renamed(self, new_name: str) -> 'Variable':
+        return Variable(new_name, self.value_type)
+
     def __repr__(self):
         return "Variable<{self.name} = {self.value_type}".format(
             self=self
@@ -93,32 +96,36 @@ class Function(Symbol):
                 self,
                 params
             )
-        try:
-            for arg, var_token in zip(self.arguments, params):
-                # maybe var_token is identifer?
-                from br_types import IdentifierBrType
+        # try:
+        for arg, var_token in zip(self.arguments, params):
+            # maybe var_token is identifer?
+            from br_types import IdentifierBrType
+            try:
+                identifier = IdentifierBrType(var_token)
+                variable = namespace.get_var(identifier)
+                # При передаче в аргумент другого аргумента
+                variable = variable.renamed(arg.name)
+                if not isinstance(variable.value_type, arg.var_type):
+                    raise ParserArgumentTypeEqException(arg.var_type,
+                                                        type(variable.value_type))
+
+            except (ParserVariableNotFoundException,
+                    IdentifierNameErrorException):
+                # This is not identifier, try to parse directly
                 try:
-                    identifier = IdentifierBrType(var_token)
-                    variable = namespace.get_var(identifier)
-                    if not isinstance(variable.value_type, arg.var_type):
-                        raise ParserArgumentTypeEqException(arg.var_type,
-                                                            type(variable.value_type))
+                    variable = arg.apply(var_token)
+                except BaseTypesException as e2:
+                    raise e2
 
-                except (ParserVariableNotFoundException,
-                        IdentifierNameErrorException):
-                    # This is not identifier, try to parse directly
-                    try:
-                        variable = arg.apply(var_token)
-                    except BaseTypesException as e2:
-                        raise e2
-
-                variables[arg.name] = variable
-        except Exception as e:
-            raise ParserArgumentCheckTypeException(
-                self,
-                params,
-                exc=e
-            )
+            variables[arg.name] = variable
+        # except Exception as e:
+        #     raise ParserArgumentCheckTypeException(
+        #         self,
+        #         params,
+        #         exc=e
+        #     )
+        # finally:
+        #     pass
         return variables
 
     def compile(self,
@@ -170,7 +177,7 @@ class NameSpace:
         if item.text in self.symbols:
             return self.symbols[item.text]
         elif self.parent:
-            return self.parent[item]
+            return self.parent.get(item, default)
         else:
             return default
 
@@ -182,7 +189,7 @@ class NameSpace:
             raise ParserSymbolNotFoundException(item)
 
     def get_vars(self) -> Iterator[Variable]:
-        for symbol in self.symbols:
+        for symbol in self.symbols.values():
             if isinstance(symbol, Variable):
                 yield symbol
         if self.parent:

@@ -1,8 +1,8 @@
 from br_compiler import BrCompiler
-
+from executor import Interpreter
 
 if __name__ == "__main__":
-    compiler = BrCompiler('test_files/builtin/add.br')
+    compiler = BrCompiler('test_files/register/3.br')
     print("==== LINES: ====")
     for expr in compiler.lines:
         print(expr)
@@ -33,4 +33,18 @@ if __name__ == "__main__":
             print(act.compile(), end="")
         print()
     print()
+
+    print("==== EXECUTE ====")
+    bytecode_clear = []
+    for bytecode_line in bytecode:
+        bytecode_clear += bytecode_line[0]
+    interpreter = Interpreter(bytecode_clear)
+
+    try:
+        while True:
+            interpreter.step()
+    except EOFError:
+        pass
+
+    print(interpreter.memory)
 

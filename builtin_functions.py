@@ -265,11 +265,12 @@ class _Reg(Function):
                 namespace: 'NameSpace' = None
                 ):
         register_name = variables['name'].value
-        busy = []
+        busy = set()
         vars = namespace.get_vars()
         for var in vars:
-            busy.append(var.value)
-        empty = _get_first_empty(busy)
+            if isinstance(var.value_type, AddressBrType):
+                busy.add(var.value)
+        empty = _get_first_empty(sorted(list(busy)))
         namespace.symbol_push(
             Variable(register_name, AddressBrType(None, value=empty))
         )
@@ -303,4 +304,5 @@ builtin_functions = [
     _print,
     _read,
     _macro,
+    _reg,
 ]
