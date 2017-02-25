@@ -1,6 +1,6 @@
 import abc
 from enum import Enum
-from typing import List, Dict, Type, TypeVar, Tuple, Any
+from typing import List, Dict, Type, TypeVar, Tuple, Any, Iterator
 
 from br_exceptions.parser import ParserArgumentCheckLenException, ParserArgumentCheckTypeException, \
     ParserSymbolNotFoundException, ParserFunctionNotFoundException, \
@@ -104,7 +104,8 @@ class Function(Symbol):
                         raise ParserArgumentTypeEqException(arg.var_type,
                                                             type(variable.value_type))
 
-                except IdentifierNameErrorException:
+                except (ParserVariableNotFoundException,
+                        IdentifierNameErrorException):
                     # This is not identifier, try to parse directly
                     try:
                         variable = arg.apply(var_token)
@@ -141,8 +142,8 @@ class Function(Symbol):
                 "{lifetime} " \
                 "{type} " \
                 "Function " \
-                "`{name}`: " \
-                "{arguments}; {lines_len} lines inside".format(
+                "{name}" \
+                "({arguments}); {lines_len} lines inside".format(
             is_builtin="Builtin " if self.builtin else "",
             type=self.type.name.lower(),
             lifetime=self.lifetime.name.lower(),
@@ -165,22 +166,36 @@ class NameSpace:
         for symbol in symbols:
             self.symbol_push(symbol)
 
-    def __getitem__(self, item: Token) -> Symbol:
+    def get(self, item: Token, default=None) -> Symbol:
         if item.text in self.symbols:
             return self.symbols[item.text]
         elif self.parent:
             return self.parent[item]
         else:
+            return default
+
+    def __getitem__(self, item: Token) -> Symbol:
+        symbol = self.get(item, None)
+        if symbol:
+            return symbol
+        else:
             raise ParserSymbolNotFoundException(item)
 
+    def get_vars(self) -> Iterator[Variable]:
+        for symbol in self.symbols:
+            if isinstance(symbol, Variable):
+                yield symbol
+        if self.parent:
+            yield from self.parent.get_vars()
+
     def get_func(self, token: Token) -> Function:
-        func = self[token]
+        func = self.get(token)
         if not isinstance(func, Function):
             raise ParserFunctionNotFoundException(token)
         return func
 
     def get_var(self, identifier: 'IdentifierBrType'):
-        var = self[identifier.token]
+        var = self.get(identifier.token)
         if not isinstance(var, Variable):
             raise ParserVariableNotFoundException(identifier.token)
         return var

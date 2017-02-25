@@ -1,25 +1,27 @@
 import abc
 import re
+from typing import Any
 
 from br_exceptions.types import *
 from br_lexer import Token
-from br_parser import FunctionLifeTime, NameSpace
+from br_parser import FunctionLifeTime
 
 
 class AbstractBrType(metaclass=abc.ABCMeta):
     """ Умеет парсить и хранить в себе значение определённого типа """
     name = None
 
-    def __init__(self, token: Token, namespace: NameSpace = None):
+    def __init__(self, token: Token,
+                 value: Any = None):
         self.token = token  # Текст, представляющий тип
         self.text = self.token.text
-        self.namespace = namespace
-        self.value = None  # значение типа
-        try:
-            self._parse()
-        except BaseTypesException as e:
-            e.token = self.token
-            raise e
+        self.value = value  # значение типа
+        if not self.value:
+            try:
+                self._parse()
+            except BaseTypesException as e:
+                e.token = self.token
+                raise e
 
     @abc.abstractclassmethod
     def _parse(self):
@@ -89,6 +91,7 @@ class BrTypeBrType(AbstractBrType):
 
 class FunctionLifeTimeBrType(AbstractBrType):
     _type_name = "function_type"
+    # TODO: Разобраться с этим говном
     _values = {i.name.lower(): i for i in FunctionLifeTime}
 
     def _parse(self):

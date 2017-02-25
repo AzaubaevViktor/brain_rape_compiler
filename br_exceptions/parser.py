@@ -59,7 +59,6 @@ class ParserArgumentTypeEqException(BaseParserException):
         )
 
 
-
 class ParserSymbolNotFoundException(BaseParserException):
     _what = "символ"
 

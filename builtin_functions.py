@@ -183,20 +183,6 @@ _read = _Read(
 )
 
 
-class _Main(Function):
-    pass
-
-
-_main = _Main(
-    '__main',
-    [],
-    FunctionType.BLOCK,
-    FunctionLifeTime.ONLY_CURRENT,
-    code=([], []),  # hack for textual insert
-    builtin=True
-)
-
-
 class _Macro(Function):
     def check_args(self, params: List[Token]) -> Dict[str, Variable]:
         variables = {}
@@ -256,10 +242,54 @@ class _Macro(Function):
               ),
         ]
 
-macro = _Macro(
+_macro = _Macro(
     "macro",
     [],  # because custom check_args
     FunctionType.BLOCK,
+    FunctionLifeTime.GLOBAL,
+    builtin=True
+)
+
+
+def _get_first_empty(busy: list) -> int:
+    busy = sorted(busy)
+    for i, v in zip(range(len(busy)), busy):
+        if i != v:
+            return i
+    return len(busy)
+
+
+class _Reg(Function):
+    def compile(self,
+                variables: Dict[str, Variable],
+                namespace: 'NameSpace' = None
+                ):
+        register_name = variables['name'].value
+        busy = []
+        vars = namespace.get_vars()
+        for var in vars:
+            busy.append(var.value)
+        empty = _get_first_empty(busy)
+        namespace.symbol_push(
+            Variable(register_name, AddressBrType(None, value=empty))
+        )
+        return [
+            B("#",
+              "Added new variable `{}` "
+              "with address `{}` to local namespace".format(
+                  register_name,
+                  empty
+              )
+              )
+        ]
+
+
+_reg = _Reg(
+    'reg',
+    [
+        Argument('name', IdentifierBrType)
+    ],
+    FunctionType.NO_BLOCK,
     FunctionLifeTime.GLOBAL,
     builtin=True
 )
@@ -272,6 +302,5 @@ builtin_functions = [
     null,
     _print,
     _read,
-    macro,
-    _main
+    _macro,
 ]

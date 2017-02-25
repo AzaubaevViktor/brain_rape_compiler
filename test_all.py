@@ -40,7 +40,7 @@ def file_execute(file_name, *args):
 
 
 def test_files():
-    file_names = glob.glob("./test_files/*/*.br", recursive=True)
+    file_names = sorted(glob.glob("./test_files/*/*.br", recursive=True))
 
     for file_name in file_names:
         args = get_tests(file_name)
