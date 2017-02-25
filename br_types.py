@@ -1,6 +1,5 @@
 import abc
 import re
-from typing import Any
 
 from br_exceptions.types import *
 from br_lexer import Token
@@ -34,7 +33,10 @@ class IntBrType(AbstractBrType):
     name = "int"
 
     def _parse(self):
-        self.value = int(self.token.text)
+        try:
+            self.value = int(self.token.text)
+        except ValueError:
+            IntParseException(self.token)
 
 
 class IdentifierBrType(AbstractBrType):
@@ -64,7 +66,6 @@ class AddressBrType(AbstractBrType):
         if (span[1] - span[0]) > len(self.text):
             raise IdentifierNameErrorException(self.token)
         self.value = int(self.text[1:])
-
 
 
 # Должен стоять последним, так как смотрит все модули выше него

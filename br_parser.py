@@ -5,7 +5,7 @@ from typing import List, Dict, Type, TypeVar, Tuple, Any
 from br_exceptions.parser import ParserArgumentCheckLenException, ParserArgumentCheckTypeException, \
     ParserSymbolNotFoundException, ParserFunctionNotFoundException, \
     ParserVariableNotFoundException, ParserArgumentTypeEqException
-from br_exceptions.types import BaseTypesException
+from br_exceptions.types import BaseTypesException, IdentifierNameErrorException
 from br_lexer import Line, Token,  Expression
 from bytecode import ByteCode
 
@@ -41,18 +41,8 @@ class Argument:
         self.name = name
         self.var_type = var_type
 
-    def apply(self, token: Token, namespace: 'NameSpace' = None) -> Variable:
-        try:
-            value_type = self.var_type(token)
-        except BaseTypesException as e:
-            from br_types import IdentifierBrType
-            identifier = IdentifierBrType(token)
-            # raise Value or Identifier Exception
-            value_type = namespace.get_var(identifier).value_type
-        if isinstance(value_type, self.var_type):
-            return Variable(self.name, value_type)
-        else:
-            raise ParserArgumentTypeEqException(self.var_type, type(value_type))
+    def apply(self, token: Token) -> Variable:
+        return Variable(self.name, self.var_type(token))
 
     def __repr__(self):
         return "Argument<{about}>".format(
@@ -97,7 +87,6 @@ class Function(Symbol):
                    params: List[Token],
                    namespace: 'NameSpace' = None
                    ) -> Dict[str, Variable]:
-        # TODO: Добавить проверку на типы переменных
         variables = {}
         if len(self.arguments) != len(params):
             raise ParserArgumentCheckLenException(
@@ -105,8 +94,25 @@ class Function(Symbol):
                 params
             )
         try:
-            for arg, var in zip(self.arguments, params):
-                variables[arg.name] = arg.apply(var, namespace)
+            for arg, var_token in zip(self.arguments, params):
+                # maybe var_token is identifer?
+                from br_types import IdentifierBrType
+                try:
+                    identifier = IdentifierBrType(var_token)
+                    variable = namespace.get_var(identifier)
+                    if not isinstance(variable.value_type, arg.var_type):
+                        raise ParserArgumentTypeEqException(arg.var_type,
+                                                            type(variable.value_type))
+
+                except (IdentifierNameErrorException,
+                        ParserVariableNotFoundException) as e1:
+                    # This is not identifier, try to parse directly
+                    try:
+                        variable = arg.apply(var_token)
+                    except BaseTypesException as e2:
+                        raise e2
+
+                variables[arg.name] = variable
         except Exception as e:
             raise ParserArgumentCheckTypeException(
                 self,

@@ -7,6 +7,12 @@ class BaseTypesException(BaseBrException):
         self.token = token
 
 
+class IntParseException(BaseTypesException):
+    def __str__(self):
+        return "Невозможно воспринять строку `{}`" \
+               " как число".format(self.name)
+
+
 class IdentifierNameErrorException(BaseTypesException):
     def __str__(self):
         return "Идентификатор должен состоять из букв, цифр и `_`. " \
