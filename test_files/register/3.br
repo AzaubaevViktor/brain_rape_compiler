@@ -21,6 +21,6 @@ printing A 5
 _add A 10 # 'R'
 printing A 7
 
-#! test_OUTPUT 'MY'
+#! test_OUTPUT "MY"
 
 
