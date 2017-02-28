@@ -75,7 +75,7 @@ class Function(Symbol):
                  _type: FunctionType,
                  lifetime: FunctionLifeTime,
                  source: List[Line] or None = None,
-                 code: List[Expression] or Tuple(List[Expression], List[Expression]) or None = None,
+                 code: List[Expression] or List[List[Expression]] or None = None,
                  builtin: bool = False
                  ):
         self.name = name

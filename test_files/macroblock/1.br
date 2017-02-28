@@ -1,0 +1,9 @@
+macroblock global f int x
+    _add :0 x
+    code
+    _add :2 x
+
+f 2
+    _add :1 5
+
+#! test_MEMORYL 2 5 2

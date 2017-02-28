@@ -1,0 +1,12 @@
+macroblock global f int x address addr
+    _add :0 x
+    code
+    _add :1 x
+    code
+    _add :2 x
+    code
+
+f 10 :3
+    _add addr x
+
+#! test_MEMORYL 10 10 10 30

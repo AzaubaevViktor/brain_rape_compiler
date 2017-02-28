@@ -1,0 +1,18 @@
+
+macroblock global first int y
+    _add :0 y
+    code
+    macroblock global second int z
+        _add :1 y
+        code
+        _add :2 z
+    code
+    _add :3 10
+    second 20
+        _add :4 z
+
+first 30
+    _add :4 y
+    _add :4 y
+
+#! test_MEMORYL 30 30 20 10 140

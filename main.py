@@ -2,7 +2,7 @@ from br_compiler import BrCompiler
 from executor import Interpreter
 
 if __name__ == "__main__":
-    compiler = BrCompiler('test_files/register/4.br')
+    compiler = BrCompiler('test_files/macroblock/3.br')
     print("==== LINES: ====")
     for expr in compiler.lines:
         print(expr)

@@ -2,11 +2,21 @@ from typing import Iterator
 from typing import List, Tuple
 
 from br_lexer import Block, Expression
+from br_parser import Function, Argument
 from br_parser import Token, Line, NameSpace, FunctionType
 from br_exceptions.lexer import LexerLevelErrorException, LexerBlockLevelErrorException
 from builtin_functions import builtin_functions
 from builtin_variables import builtin_variables
 from bytecode import ByteCode
+
+
+class Context:
+    def __init__(self, func: Function,
+                 args: List[Argument],
+                 ns: NameSpace):
+        self.func = func
+        self.arguments = args
+        self.namespace = ns
 
 
 class BrCompiler:
@@ -111,25 +121,6 @@ class BrCompiler:
         ns.symbols_push(builtin_variables)
         self.namespace = ns
 
-    def old_line_compile(self) -> List[Tuple[List[ByteCode], Line]]:
-        """ Старая версия итоговой компиляции для одного уровня вложенности """
-        bytecode = []
-        for line in self.lines:
-            ns = self.namespace[-1]
-            func = ns.get_func_by_token(line.func_token)
-            if func.builtin:
-                #  Builtin NoBlock function
-                if FunctionType.NO_BLOCK == func.type:
-                    variables = func.check_args(line.params)
-                    code = func.compile(variables)
-                    bytecode.append((code, line))
-                #  Builtin Block Function
-                elif FunctionType.BLOCK == func.type:
-                    pass
-            else:
-                pass
-        return bytecode
-
     def compile(self):
         self._init_default_namespace()
         return self._compile(
@@ -152,6 +143,9 @@ class BrCompiler:
                     bytecode.append((code, func, expr))
                 else:
                     # not builtin no block
+                    if FunctionType.NO_BLOCK != func.type:
+                        print("Error, function is not no_block!")
+                        # raise Error
                     variables = func.check_args(expr.params, namespace)
                     code = func.code
                     new_ns = namespace.create_namespace()
@@ -171,8 +165,18 @@ class BrCompiler:
                     pass
                 else:
                     # not builtin block
-                    pass
-
+                    if FunctionType.BLOCK != func.type:
+                        print("Error, function is not block!")
+                        # raise Error
+                    variables = func.check_args(expr.params)
+                    code = []
+                    for part in func.code[:-1]:
+                        code += part
+                        code += expr.block_lines
+                    code += func.code[-1]
+                    new_ns = namespace.create_namespace()
+                    new_ns.symbols_push(variables.values())
+                    bytecode += self._compile(new_ns, code)
         return bytecode
 
         # func: not builtin and block

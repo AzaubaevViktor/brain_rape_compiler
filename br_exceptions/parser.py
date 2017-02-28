@@ -29,7 +29,7 @@ class ParserArgumentCheckLenException(ParserArgumentCheckException):
                "функции `{func.name}`. Ожидается {expect}, " \
                "передано `{passed}`".format(
             func=self.function,
-            expect=len(self.function.arguments or self.number),
+            expect=len(self.function.arguments) or self.number,
             passed=len(self.params)
         )
 

@@ -12,9 +12,7 @@ from bytecode import ByteCode as B
 
 
 class _Nope(Function):
-    def compile(self,
-                variables: Dict[str, Variable]
-                ):
+    def compile(self, variables: Dict[str, Variable], **kwargs):
         return [
             B("#", "Nope func")
         ]
@@ -251,6 +249,51 @@ _macro = _Macro(
 )
 
 
+class _MacroBlock(_Macro):
+    def compile_block(self,
+                      variables: Dict[str, Variable],
+                      block_inside: List[Expression] or None = None,
+                      namespace: 'NameSpace' = None
+                      ):
+        function_name = variables['name'].value
+        arguments = variables['arguments']  # type: List[Argument]
+        lifetime = variables['lifetime'].value
+
+        code = [[]]
+
+        for expr in block_inside:  # type: Expression
+            if str(expr.func_token) == 'code':
+                code.append([])
+            else:
+                code[-1].append(expr)
+
+        namespace.symbol_push(
+            Function(
+                function_name,
+                arguments,
+                FunctionType.BLOCK,
+                lifetime,
+                source=block_inside,
+                code=code,
+            )
+        )
+
+        return [
+            B(B.NONE,
+              "Add macro function `{}` to current namespace".format(function_name)
+              ),
+        ]
+
+
+_macroblock = _MacroBlock(
+    "macroblock",
+    [],  # because custom check_args
+    FunctionType.BLOCK,
+    FunctionLifeTime.GLOBAL,
+    builtin=True
+)
+
+
 def _get_first_empty(busy: list) -> int:
     busy = sorted(busy)
     for i, v in zip(range(len(busy)), busy):
@@ -305,4 +348,5 @@ builtin_functions = [
     _read,
     _macro,
     _reg,
+    _macroblock
 ]
