@@ -44,33 +44,39 @@ class IntBrType(AbstractBrType):
             IntParseException(self.token)
 
 
-class IdentifierBrType(AbstractBrType):
+class _RegexprBrType(AbstractBrType):
+    regexp = re.compile(r'')
+    exception_class = BaseTypesException
+
+    def _parse(self):
+        match = self.regexp.match(self.text)
+        if not match:
+            raise self.exception_class(self.token)
+        span = match.span()
+        if (span[1] - span[0]) > len(self.text):
+            raise self.exception_class(self.token)
+        self.value = match.groups()[0]
+
+
+class StrBrType(_RegexprBrType):
+    name = 'str'
+    regexp = re.compile(r'"(.*)"')
+    exception_class = StrParseException
+
+
+class IdentifierBrType(_RegexprBrType):
     name = "identifier"
-    _regexp = re.compile(r'[A-z]\w*')
-
-    def _parse(self):
-        match = self._regexp.match(self.text)
-        if not match:
-            raise IdentifierNameErrorException(self.token)
-        span = match.span()
-        if (span[1] - span[0]) > len(self.text):
-            raise IdentifierNameErrorException(self.token)
-        self.value = self.text
+    regexp = re.compile(r'([A-z]\w*)')
+    exception_class = IdentifierNameErrorException
 
 
-class AddressBrType(AbstractBrType):
+class AddressBrType(_RegexprBrType):
     name = "address"
-    _addr_int_r = re.compile(r':(\d+)')
+    regexp = re.compile(r':(\d+)')
 
     def _parse(self):
-        # try to find `:123...`
-        match = self._addr_int_r.match(self.text)
-        if not match:
-            raise IdentifierNameErrorException(self.token)
-        span = match.span()
-        if (span[1] - span[0]) > len(self.text):
-            raise IdentifierNameErrorException(self.token)
-        self.value = int(self.text[1:])
+        super()._parse()
+        self.value = int(self.value)
 
 
 # Должен стоять последним, так как смотрит все модули выше него

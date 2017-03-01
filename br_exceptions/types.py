@@ -13,6 +13,11 @@ class IntParseException(BaseTypesException):
                " как число".format(self.name)
 
 
+class StrParseException(BaseTypesException):
+    def __str__(self):
+        return "Строка должна быть обёрнута в кавычки"
+
+
 class IdentifierNameErrorException(BaseTypesException):
     def __str__(self):
         return "Идентификатор должен состоять из букв, цифр и `_`. " \
@@ -24,7 +29,6 @@ class AddressErrorException(BaseTypesException):
         return "Адрес должен быть либо строкой вида `:32`, либо " \
                "идентификатором из текущего пространства имён." \
                " Обнаружено: `{}`".format(self.name)
-
 
 
 class TypeNameErrorException(BaseTypesException):

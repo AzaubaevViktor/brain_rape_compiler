@@ -224,8 +224,7 @@ class _Macro(Function):
         arguments = variables['arguments']  # type: List[Argument]
         lifetime = variables['lifetime'].value
         # Because variables['arguments'] List[Argument], not Variable
-        namespace.symbol_push(
-            Function(
+        func = Function(
                 function_name,
                 arguments,
                 FunctionType.NO_BLOCK,
@@ -233,7 +232,9 @@ class _Macro(Function):
                 source=block_inside,
                 code=block_inside,
             )
-        )
+
+        namespace.symbol_lifetime_push(lifetime, func)
+
         return [
             B(B.NONE,
               "Add function `{}` to current namespace".format(function_name)
@@ -267,8 +268,7 @@ class _MacroBlock(_Macro):
             else:
                 code[-1].append(expr)
 
-        namespace.symbol_push(
-            Function(
+        func = Function(
                 function_name,
                 arguments,
                 FunctionType.BLOCK,
@@ -276,7 +276,8 @@ class _MacroBlock(_Macro):
                 source=block_inside,
                 code=code,
             )
-        )
+
+        namespace.symbol_lifetime_push(lifetime, func)
 
         return [
             B(B.NONE,

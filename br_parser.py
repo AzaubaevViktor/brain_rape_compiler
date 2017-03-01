@@ -57,6 +57,7 @@ class Argument:
             self=self
         )
 
+
 class FunctionType(Enum):
     NO_BLOCK = 1
     BLOCK = 2
@@ -64,7 +65,8 @@ class FunctionType(Enum):
 
 class FunctionLifeTime(Enum):
     GLOBAL = 1  # Текущий namespace и дочерние
-    ONLY_CURRENT = 2  # Только этот namespace (Для __main)
+    LOCAL = 2  # Только текущий namespace
+    NEXT_OR_NEVER = 3  # Должен быть следующим, либо удаляется из namespace
 
 
 class Function(Symbol):
@@ -166,8 +168,28 @@ class NameSpace:
         self.parent = parent  # type: NameSpace
         self.symbols = {}
 
+    def symbol_lifetime_push(self,
+                             lifetime: FunctionLifeTime,
+                             symbol: Symbol
+                             ):
+        if FunctionLifeTime.GLOBAL == lifetime:
+            self.symbol_global_push(symbol)
+        elif FunctionLifeTime.LOCAL == lifetime:
+            self.symbol_push(symbol)
+        elif FunctionLifeTime.NEXT_OR_NEVER == lifetime:
+            self.symbol_parent_push(symbol)
+
     def symbol_push(self, symbol: Symbol):
         self.symbols[symbol.name] = symbol
+
+    def symbol_global_push(self, symbol: Symbol):
+        if self.parent:
+            self.parent.symbol_global_push(symbol)
+        else:
+            self.symbol_push(symbol)
+
+    def symbol_parent_push(self, symbol: Symbol):
+        self.parent.symbol_push(symbol)
 
     def symbols_push(self, symbols: List[Symbol]):
         for symbol in symbols:
