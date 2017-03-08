@@ -1,44 +1,47 @@
-from br_compiler import BrCompiler
+from br_compiler import FileCompiler, Lexer
 from executor import Interpreter
 
 if __name__ == "__main__":
-    compiler = BrCompiler('test_files/macroblock/3.br')
-    print("==== LINES: ====")
-    for expr in compiler.lines:
-        print(expr)
+    file_name = 'test_files/macroblock/2.br'
+    block = None
+    with open(file_name, 'rt') as f:
+        l = Lexer(f.readlines())
 
-    print(compiler.block)
+        print("==== LINES: ====")
+        for expr in l.lines:
+            print(expr)
+
+        block = l.block
+
+    print("=== BLOCK ====")
+    print(block)
 
     print(
         "\n".join(
-            compiler.block.debug_print()
+            block.debug_print()
         )
     )
 
-    bytecode = compiler.compile()
-    print()
-    print("==== BYTECODE: ====")
-    for code, func, expr in bytecode:
-        for act in code:
-            print(act, end=" ")
-        print()
-        print(func)
-        print(expr)
-        print("------")
+    compiler = FileCompiler(file_name, block)
 
-    print()
+    compiler.compile()
+
+    print("==== BYTECODE: ====")
+
+    print(
+        "\n".join(
+            compiler.context.debug_print()
+        )
+    )
+
     print("==== BRAINFUCK ====")
-    for code, *_ in bytecode:
-        for act in code:
-            print(act.compile(), end="")
-        print()
+    bytecode = compiler.context.full_bytecode()
+    for code in compiler.context.full_bytecode():
+        print(code.compile(), end="")
     print()
 
     print("==== EXECUTE ====")
-    bytecode_clear = []
-    for bytecode_line in bytecode:
-        bytecode_clear += bytecode_line[0]
-    interpreter = Interpreter(bytecode_clear)
+    interpreter = Interpreter(bytecode)
 
     try:
         while True:

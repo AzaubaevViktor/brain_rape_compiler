@@ -3,7 +3,7 @@ import io
 
 import pytest
 
-from br_compiler import BrCompiler
+from br_compiler import FileCompiler, Lexer
 from executor import Interpreter
 from utils import get_tests
 
@@ -11,11 +11,19 @@ from utils import get_tests
 def file_execute(file_name, *args):
     print(file_name)
     memory_tests, memory_dict_test, inp, out = args
-    compiler = BrCompiler(file_name)
-    bytecode_raw = compiler.compile()
-    bytecode = []
-    for bytecode_line in bytecode_raw:
-        bytecode += bytecode_line[0]
+
+    block = None
+    with open(file_name, 'rt') as f:
+        l = Lexer(f.readlines())
+
+        block = l.block
+
+    compiler = FileCompiler(file_name, block)
+
+    compiler.compile()
+
+    bytecode = compiler.context.full_bytecode()
+
     program_out = io.StringIO()
     interpreter = Interpreter(bytecode,
                               output=program_out,
@@ -28,15 +36,26 @@ def file_execute(file_name, *args):
         pass
 
     # tests
+    mt_count = 0
     for test in memory_tests:
         for tv, mv in zip(test, interpreter.memory):
             if -1 != tv:
                 assert tv == mv
+                mt_count += 1
+
+    print("Memory Tested {} cells, OK".format(mt_count))
 
     assert interpreter.memory == memory_dict_test
 
+    print("Memory Dict Tested {} cells, OK".format(len(memory_dict_test)))
+
     if out:
-        assert program_out.getvalue() == out.getvalue()
+        po_v = program_out.getvalue()
+        o_v = out.getvalue()
+        assert po_v == o_v
+        print("Output test OK, len: {}".format(len(o_v)))
+
+    print(" ====== ")
 
 
 def test_files():

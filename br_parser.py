@@ -1,6 +1,6 @@
 import abc
 from enum import Enum
-from typing import List, Dict, Type, TypeVar, Tuple, Any, Iterator
+from typing import List, Dict, Type, TypeVar, Tuple, Any, Iterator, Iterable
 
 from br_exceptions.parser import ParserArgumentCheckLenException, ParserArgumentCheckTypeException, \
     ParserSymbolNotFoundException, ParserFunctionNotFoundException, \
@@ -164,7 +164,7 @@ class Function(Symbol):
 
 
 class NameSpace:
-    def __init__(self, parent: 'NameSpace' or None):
+    def __init__(self, parent: 'NameSpace' or None = None):
         self.parent = parent  # type: NameSpace
         self.symbols = {}
 
@@ -191,7 +191,7 @@ class NameSpace:
     def symbol_parent_push(self, symbol: Symbol):
         self.parent.symbol_push(symbol)
 
-    def symbols_push(self, symbols: List[Symbol]):
+    def symbols_push(self, symbols: Iterable[Symbol]):
         for symbol in symbols:
             self.symbol_push(symbol)
 
@@ -223,7 +223,7 @@ class NameSpace:
             raise ParserFunctionNotFoundException(token)
         return func
 
-    def get_var(self, identifier: 'IdentifierBrType'):
+    def get_var(self, identifier: 'IdentifierBrType') -> Variable:
         var = self.get(identifier.token)
         if not isinstance(var, Variable):
             raise ParserVariableNotFoundException(identifier.token)
@@ -237,7 +237,7 @@ class NameSpace:
         else:
             return addr.value
 
-    def create_namespace(self):
+    def create_namespace(self) -> 'NameSpace':
         ns = NameSpace(self)
         return ns
 

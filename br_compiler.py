@@ -10,25 +10,14 @@ from builtin_variables import builtin_variables
 from bytecode import ByteCode
 
 
-class Context:
-    def __init__(self, func: Function,
-                 args: List[Argument],
-                 ns: NameSpace):
-        self.func = func
-        self.arguments = args
-        self.namespace = ns
-
-
-class BrCompiler:
-    def __init__(self, file_name):
-        self.file_name = file_name
-        self.file = None
+class Lexer:
+    def __init__(self, source_lines):
+        self.source_lines = source_lines
         self.lines = []  # type: List[Line]
         self.block = None  # type: Block
+
         self._lines_process()
         self._block_process()
-        self.namespace = None  # type: NameSpace or None
-        self._init_default_namespace()
 
     @staticmethod
     def _get_line_level(s):
@@ -43,7 +32,8 @@ class BrCompiler:
             raise LexerLevelErrorException(s, level)
         return level // 4
 
-    def _get_tokens(self, line_n: int, s: str) -> List[Token]:
+    @staticmethod
+    def _get_tokens(line_n: int, s: str) -> List[Token]:
         """ Возвращает список токенов из строки """
         pos = 0
         tokens = []
@@ -74,15 +64,15 @@ class BrCompiler:
 
     def _lines_process(self):
         """ Заполняет self.lines из файла """
-        self.file = open(self.file_name, "rt")
+        # self.file = open(self.file_name, "rt")
         line_n = 1
-        for raw_line in self.file.readlines():
+        for raw_line in self.source_lines:
             line = self._get_line(line_n, raw_line)
             if line:
                 self.lines.append(line)
 
             line_n += 1
-        self.file.close()
+        # self.file.close()
         # add last line for _block_process
         self.lines.append(
             self._get_line(line_n, "nope")
@@ -90,7 +80,9 @@ class BrCompiler:
 
     def _block_process(self):
         """ Обрабатывает self.lines и где надо преобразовывает их в блоки"""
-        cur_block = self.block = Block(None, Line(-1, -1, [Token(-1, -1, "__main")], "__main"))
+        cur_block = self.block = Block(None, Line(-1, -1,
+                                                  [Token(-1, -1, "__main")],
+                                                  "__main"))
         cur_iter = iter(self.lines)  # type: Iterator[Line]
         next_iter = iter(self.lines)  # type: Iterator[Line]
         next(next_iter)
@@ -114,84 +106,131 @@ class BrCompiler:
                 # level up more then 2
                 raise LexerBlockLevelErrorException(cur_line, next_line)
 
-    def _init_default_namespace(self):
-        """ Создаёт первичный NameSpace"""
-        ns = NameSpace(None)
-        ns.symbols_push(builtin_functions)
-        ns.symbols_push(builtin_variables)
-        self.namespace = ns
+
+class Context:
+    def __init__(self, parent: 'Context' or None,
+                 expr: Expression,
+                 namespace: NameSpace or None = None
+                 ):
+        self.parent = parent
+        self.childs = []  # type: List[Context]
+        self.expr = expr  # type: Expression
+        self.func = None  # type: Function or None
+        self.args = None  # type: List[Argument] or None
+        # NameSpace здесь создаётся именно для ПОТОМКОВ, NameSpace, в контексте
+        # оторого выполняется данное выражение находится на уровень выше
+        # Предназначен только для ДОБАВЛЕНИЯ В НЕГО НОВЫХ ПЕРЕМЕННЫХ
+        # предназначен для БЛОКОВЫХ ФУНКЦИЙ, ПЕРЕДАЁТСЯ В НЕГО
+        self.ch_ns = namespace or NameSpace()
+        self.bytecode = []  # type: List[ByteCode]
+
+    @property
+    def ns(self):
+        return self.ch_ns.parent
+
+    def create_child(self, expr: Expression) -> 'Context':
+        cntx = Context(parent=self,
+                       expr=expr,
+                       namespace=self.ch_ns.create_namespace()
+                       )
+        self.childs.append(cntx)
+        return cntx
 
     def compile(self):
-        self._init_default_namespace()
-        return self._compile(
-            self.namespace,
-            self.block.block_lines
+        # found function
+        self.func = self.ns.get_func(self.expr.func_token)
+        if isinstance(self.expr, Line):
+            if self.func.builtin:
+                # Builtin, NoBlock
+                self.args = self.func.check_args(self.expr.args, self.ns)
+                self.bytecode = self.func.compile(self.args, self.ns)
+            else:
+                # No builtin, NoBlock
+                if FunctionType.NO_BLOCK != self.func.type:
+                    print("Error, function is not no_block!")
+                    # raise Error
+                self.args = self.func.check_args(self.expr.args, self.ns)
+                self.ch_ns.symbols_push(self.args.values())
+
+                for expr in self.func.code:
+                    cntx = self.create_child(expr)
+                    cntx.compile()
+
+        elif isinstance(self.expr, Block):
+            if self.func.builtin:
+                # Builtin, Block
+                self.args = self.func.check_args(self.expr.args)
+                self.bytecode = self.func.compile_block(
+                    self.args,
+                    self.expr.block_lines,
+                    self.ch_ns
+                )
+            else:
+                # not builtin block
+                if FunctionType.BLOCK != self.func.type:
+                    print("Error, function is not block!")
+                    # raise Error
+                self.args = self.func.check_args(self.expr.args)
+                code = []
+                for part in self.func.code[:-1]:
+                    code += part
+                    code += self.expr.block_lines
+                code += self.func.code[-1]
+
+                self.ch_ns.symbols_push(self.args.values())
+
+                for expr in code:
+                    cntx = self.create_child(expr)
+                    cntx.compile()
+
+    def __str__(self):
+        btcode = " ".join([str(b) for b in self.bytecode])
+        btcode = btcode + "\n" if btcode else btcode
+        return "{self.func}\n{self.args}\n{btcode}".format(
+            self=self,
+            btcode=btcode or "--->"
         )
 
-    def _compile(self,
-                 namespace: NameSpace,
-                 expressions: List[Expression]
-                 ) -> List[Tuple[List[ByteCode], Expression]]:
-        bytecode = []
-        for expr in expressions:
-            func = namespace.get_func(expr.func_token)
-            if isinstance(expr, Line):
-                if func.builtin:
-                    # Builtin no block
-                    variables = func.check_args(expr.params, namespace)
-                    code = func.compile(variables, namespace)
-                    bytecode.append((code, func, expr))
-                else:
-                    # not builtin no block
-                    if FunctionType.NO_BLOCK != func.type:
-                        print("Error, function is not no_block!")
-                        # raise Error
-                    variables = func.check_args(expr.params, namespace)
-                    code = func.code
-                    new_ns = namespace.create_namespace()
-                    new_ns.symbols_push(variables.values())
-                    bytecode += self._compile(new_ns, code)
+    def debug_print(self, level: int =0, view_func=str) -> List[str]:
+        def ident(s):
+            rs = view_func(s)
+            lines = []
+            for line in rs.split("\n"):
+                lines.append(" " * level * 4 + line)
+            return lines
 
-            elif isinstance(expr, Block):
-                if func.builtin:
-                    # builtin block
-                    variables = func.check_args(expr.params)
-                    code = func.compile_block(
-                        variables,
-                        expr.block_lines,
-                        namespace
-                    )
-                    bytecode.append((code, func, expr))
-                    pass
-                else:
-                    # not builtin block
-                    if FunctionType.BLOCK != func.type:
-                        print("Error, function is not block!")
-                        # raise Error
-                    variables = func.check_args(expr.params)
-                    code = []
-                    for part in func.code[:-1]:
-                        code += part
-                        code += expr.block_lines
-                    code += func.code[-1]
-                    new_ns = namespace.create_namespace()
-                    new_ns.symbols_push(variables.values())
-                    bytecode += self._compile(new_ns, code)
+        lines = []
+
+        lines += ident(view_func(self))
+
+        for cntx in self.childs:
+            lines += cntx.debug_print(level + 1)
+
+        return lines
+
+    def full_bytecode(self):
+        bytecode = self.bytecode
+        for cntx in self.childs:
+            bytecode += cntx.full_bytecode()
         return bytecode
 
-        # func: not builtin and block
-        #   new namespace
-        #   recursive compile:
-        #       params
-        #       block.code[0] + block_inside + block.code[1]
-        # func: not builtin and not block
-        #   recursive compile:
-        #       params
-        #       block_inside
-        # func: builtin and block
-        #   func.block_compile
-        #   if not:
-        #       not builtin + block compile
-        # func: builtin and not block
-        #    func.compile
-        pass
+
+class FileCompiler:
+    def __init__(self, file_name: str, block: Block):
+        self.file_name = file_name
+        self.block = block
+        self.context = None  # type: Context or None
+        self._init_context()
+
+    def _init_context(self):
+        """ Создаёт первичный Context"""
+        context = Context(None, self.block)
+        context.ch_ns.symbols_push(builtin_functions)
+        context.ch_ns.symbols_push(builtin_variables)
+        self.context = context
+
+    def compile(self):
+        self._init_context()
+        for expr in self.block.block_lines:
+            cntx = self.context.create_child(expr)
+            cntx.compile()

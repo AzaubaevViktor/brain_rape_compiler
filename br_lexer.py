@@ -23,7 +23,7 @@ class Expression(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def params(self) -> List[Token]:
+    def args(self) -> List[Token]:
         pass
 
     @property
@@ -48,7 +48,7 @@ class Line(Expression):
         return self.tokens[0]
 
     @property
-    def params(self) -> List[Token]:
+    def args(self) -> List[Token]:
         return self.tokens[1:]
 
     @property
@@ -82,7 +82,7 @@ class Block(Expression):
         return self.first_line.tokens[0]
 
     @property
-    def params(self) -> List[Token]:
+    def args(self) -> List[Token]:
         return self.first_line.tokens[1:]
 
     @property
