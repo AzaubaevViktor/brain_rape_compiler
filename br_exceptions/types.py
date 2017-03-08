@@ -1,7 +1,7 @@
-from br_exceptions.base import BaseBrException
+from br_exceptions.base import Base
 
 
-class BaseTypesException(BaseBrException):
+class BaseTypesException(Base):
     def __init__(self, token=None):
         self.name = token.text
         self.token = token

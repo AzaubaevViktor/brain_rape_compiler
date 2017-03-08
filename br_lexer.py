@@ -1,15 +1,16 @@
 import abc
 from typing import List
+from br_exceptions import lexer as lexer_e
 
 
 class Token:
-    def __init__(self, line_n: int, pos: int, text: str):
-        self.line_n = line_n
+    def __init__(self, line: 'Line', pos: int, text: str):
+        self.line = line
         self.pos = pos
         self.text = text
 
     def __repr__(self):
-        return "{}:{}<{}>".format(self.line_n, self.pos, self.text)
+        return "{}:{}<{}>".format(self.line.line_n or "?", self.pos, self.text)
 
     def __str__(self):
         return "{}".format(self.text)
@@ -35,13 +36,39 @@ class Expression(metaclass=abc.ABCMeta):
 class Line(Expression):
     def __init__(self,
                  line_n: int,
-                 level: int,
-                 tokens: List[Token],
                  source: str):
         self.line_n = line_n
-        self._level = level
-        self.tokens = tokens
+        self._level = None  # type: int
+        self.tokens = []  # type: List[Token]
         self.source = source
+
+        self._calc_level()
+        self._calc_tokens()
+
+    def _calc_level(self):
+        """ Подсчитывает уровень вложенности строки """
+        level = 0
+        for ch in self.source:
+            if ' ' == ch:
+                level += 1
+            else:
+                break
+        if level % 4:
+            raise lexer_e.LevelError(self)
+        self._level = level // 4
+
+    def _calc_tokens(self):
+        """ Возвращает список токенов из строки """
+        pos = 0
+        for word in self.source.split(" "):
+            if len(word.strip()):
+                # Комментарии отсекаем
+                if '#' == word[0]:
+                    break
+                self.tokens.append(Token(self, pos, word.strip()))
+                pos += len(word)
+
+            pos += 1
 
     @property
     def func_token(self) -> Token:
@@ -54,6 +81,9 @@ class Line(Expression):
     @property
     def level(self) -> int:
         return self._level
+
+    def __bool__(self):
+        return len(self.tokens) > 0
 
     def __str__(self):
         tokens_str = " ".join([str(token) for token in self.tokens])

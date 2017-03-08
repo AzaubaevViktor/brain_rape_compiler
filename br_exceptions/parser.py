@@ -1,9 +1,9 @@
 from typing import List
 
-from br_exceptions.base import BaseBrException
+from br_exceptions.base import Base
 
 
-class BaseParserException(BaseBrException):
+class BaseParserException(Base):
     pass
 
 

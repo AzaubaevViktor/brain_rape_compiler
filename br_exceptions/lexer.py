@@ -1,20 +1,23 @@
-from br_exceptions.base import BaseBrException
+from br_exceptions.base import Base
 
 
-class BaseLexerException(BaseBrException):
+class _BaseLexer(Base):
     pass
 
 
-class LexerLevelErrorException(BaseLexerException):
-    def __init__(self, s: str, level: int):
-        self.s = s
-        self.level = level
+class LevelError(_BaseLexer):
+    def __init__(self, line: 'Line'):
+        self.line = line
 
     def __str__(self):
-        return "Неверное количество пробелов. Оно должно быть кратно 4м"
+        return "\n" \
+               "Неверное количество пробелов. Оно должно быть кратно 4м\n" \
+               "{self.line.line_n}: `{self.line.source}`".format(
+            self=self
+        )
 
 
-class LexerBlockLevelErrorException(BaseLexerException):
+class BlockLevelError(_BaseLexer):
     def __init__(self, prev_line: 'Line',
                  cur_line: 'Line'):
         self.prev_line = prev_line
