@@ -12,7 +12,7 @@ from bytecode import ByteCode as B
 
 
 class _Nope(Function):
-    def compile(self, variables: Dict[str, Variable], **kwargs):
+    def compile(self, context: 'Context') -> List[B]:
         return [
             B("#", "Nope func")
         ]
@@ -27,11 +27,9 @@ nope = _Nope(
 
 
 class _Add(Function):
-    def compile(self,
-                variables: Dict[str, Variable],
-                namespace: 'NameSpace' = None):
-        addr = variables['addr'].value
-        value = variables['value'].value
+    def compile(self, context: 'Context') -> List[B]:
+        addr = context.vars['addr'].value
+        value = context.vars['value'].value
         return [
             B(">", addr),
             B("+", value),
@@ -51,11 +49,9 @@ add = _Add(
 
 
 class _Mov(Function):
-    def compile(self,
-                variables: Dict[str, Variable],
-                namespace: 'NameSpace' = None):
-        to_addr = variables['to_addr'].value
-        from_addr = variables['from_addr'].value
+    def compile(self, context: 'Context') -> List[B]:
+        to_addr = context.vars['to_addr'].value
+        from_addr = context.vars['from_addr'].value
         return [
             B(">", from_addr - 0),  # Move to from_addr
             B("[", 0),  # While *from_addr not null, do
@@ -80,12 +76,10 @@ mov = _Mov(
 
 
 class _Mov2(Function):
-    def compile(self,
-                variables: Dict[str, Variable],
-                namespace: 'NameSpace' = None):
-        to1_addr = variables['to1_addr'].value
-        to2_addr = variables['to2_addr'].value
-        from_addr = variables['from_addr'].value
+    def compile(self, context: 'Context') -> List[B]:
+        to1_addr = context.vars['to1_addr'].value
+        to2_addr = context.vars['to2_addr'].value
+        from_addr = context.vars['from_addr'].value
         return [
             B(">", from_addr - 0),  # Move to from_addr
             B("["),  # While *from_addr not null, do
@@ -113,10 +107,8 @@ mov2 = _Mov2(
 
 
 class _Null(Function):
-    def compile(self,
-                variables: Dict[str, Variable],
-                namespace: 'NameSpace' = None):
-        addr = variables['addr'].value
+    def compile(self, context: 'Context') -> List[B]:
+        addr = context.vars['addr'].value
         return [
             B(">", addr - 0),   # goto addr
             B("["),   # [
@@ -137,10 +129,8 @@ null = _Null(
 
 
 class _Print(Function):
-    def compile(self,
-                variables: Dict[str, Variable],
-                namespace: 'NameSpace' = None):
-        addr = variables['addr'].value
+    def compile(self, context: 'Context') -> List[B]:
+        addr = context.vars['addr'].value
         return [
             B(">", addr - 0),    # goto addr
             B("."),           # print from addr
@@ -159,10 +149,8 @@ _print = _Print(
 
 
 class _Read(Function):
-    def compile(self,
-                variables: Dict[str, Variable],
-                namespace: 'NameSpace' = None):
-        addr = variables['addr'].value
+    def compile(self, context: 'Context') -> List[B]:
+        addr = context.vars['addr'].value
         return [
             B(">", addr - 0),
             B(","),
@@ -182,14 +170,15 @@ _read = _Read(
 
 
 class _Macro(Function):
-    def check_args(self, params: List[Token]) -> Dict[str, Variable]:
+    def check_args(self, context: 'Context') -> Dict[str, Variable]:
+        arg_tokens = context.expr.args
         variables = {}
-        if len(params) < 2:
-            raise ParserArgumentCheckLenException(self, params, 2)
-        if len(params) % 2:
-            raise ParserArgumentCheckLenException(self, params, len(params) + 1)
+        if len(arg_tokens) < 2:
+            raise ParserArgumentCheckLenException(self, arg_tokens, 2)
+        if len(arg_tokens) % 2:
+            raise ParserArgumentCheckLenException(self, arg_tokens, len(arg_tokens) + 1)
 
-        params_iter = iter(params)
+        params_iter = iter(arg_tokens)
         try:
             variables['lifetime'] = FunctionLifeTimeBrType(next(params_iter))
             variables['name'] = IdentifierBrType(next(params_iter))
@@ -209,21 +198,19 @@ class _Macro(Function):
             traceback.print_exception(*sys.exc_info())
             raise ParserArgumentCheckTypeException(
                 self,
-                params,
+                arg_tokens,
                 exc=e
             )
 
         return variables
 
-    def compile_block(self,
-                      variables: Dict[str, Variable],
-                      block_inside: List[Expression] or None = None,
-                      namespace: NameSpace = None
-                      ):
-        function_name = variables['name'].value
-        arguments = variables['arguments']  # type: List[Argument]
-        lifetime = variables['lifetime'].value
+    def compile_block(self, context: 'Context') -> List[B]:
+        function_name = context.vars['name'].value
+        arguments = context.vars['arguments']  # type: List[Argument]
+        lifetime = context.vars['lifetime'].value
         # Because variables['arguments'] List[Argument], not Variable
+
+        block_inside = context.expr.block_lines
         func = Function(
                 function_name,
                 arguments,
@@ -233,7 +220,7 @@ class _Macro(Function):
                 code=block_inside,
             )
 
-        namespace.symbol_lifetime_push(lifetime, func)
+        context.ns.symbol_lifetime_push(lifetime, func)
 
         return [
             B(B.NONE,
@@ -251,16 +238,14 @@ _macro = _Macro(
 
 
 class _MacroBlock(_Macro):
-    def compile_block(self,
-                      variables: Dict[str, Variable],
-                      block_inside: List[Expression] or None = None,
-                      namespace: 'NameSpace' = None
-                      ):
-        function_name = variables['name'].value
-        arguments = variables['arguments']  # type: List[Argument]
-        lifetime = variables['lifetime'].value
+    def compile_block(self, context: 'Context') -> List[B]:
+        function_name = context.vars['name'].value
+        arguments = context.vars['arguments']  # type: List[Argument]
+        lifetime = context.vars['lifetime'].value
 
         code = [[]]
+
+        block_inside = context.expr.block_lines
 
         for expr in block_inside:  # type: Expression
             if str(expr.func_token) == 'code':
@@ -277,7 +262,7 @@ class _MacroBlock(_Macro):
                 code=code,
             )
 
-        namespace.symbol_lifetime_push(lifetime, func)
+        context.ns.symbol_lifetime_push(lifetime, func)
 
         return [
             B(B.NONE,
@@ -304,18 +289,15 @@ def _get_first_empty(busy: list) -> int:
 
 
 class _Reg(Function):
-    def compile(self,
-                variables: Dict[str, Variable],
-                namespace: 'NameSpace' = None
-                ):
-        register_name = variables['name'].value
+    def compile(self, context: 'Context') -> List[B]:
+        register_name = context.vars['name'].value
         busy = set()
-        vars = namespace.get_vars()
+        vars = context.ch_ns.get_vars()
         for var in vars:
             if isinstance(var.value_type, AddressBrType):
                 busy.add(var.value)
         empty = _get_first_empty(sorted(list(busy)))
-        namespace.symbol_push(
+        context.ns.symbol_push(
             Variable(register_name, AddressBrType(None, value=empty))
         )
         return [

@@ -2,7 +2,7 @@ from br_compiler import FileCompiler, Lexer
 from executor import Interpreter
 
 if __name__ == "__main__":
-    file_name = 'test_files/macroblock/2.br'
+    file_name = 'test_files/register/1.br'
     block = None
     with open(file_name, 'rt') as f:
         l = Lexer(f.readlines())
@@ -36,7 +36,7 @@ if __name__ == "__main__":
 
     print("==== BRAINFUCK ====")
     bytecode = compiler.context.full_bytecode()
-    for code in compiler.context.full_bytecode():
+    for code in bytecode:
         print(code.compile(), end="")
     print()
 
@@ -49,5 +49,7 @@ if __name__ == "__main__":
     except EOFError:
         pass
 
+    print()
+    print("==== MEMORY ====")
     print(interpreter.memory)
 

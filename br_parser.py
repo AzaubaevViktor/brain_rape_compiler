@@ -2,11 +2,12 @@ import abc
 from enum import Enum
 from typing import List, Dict, Type, TypeVar, Tuple, Any, Iterator, Iterable
 
-from br_exceptions.parser import ParserArgumentCheckLenException, ParserArgumentCheckTypeException, \
+from br_exceptions.parser import ParserArgumentCheckLenException, \
+    ParserArgumentCheckTypeException, \
     ParserSymbolNotFoundException, ParserFunctionNotFoundException, \
     ParserVariableNotFoundException, ParserArgumentTypeEqException
 from br_exceptions.types import BaseTypesException, IdentifierNameErrorException
-from br_lexer import Line, Token,  Expression
+from br_lexer import Line, Token, Expression
 from bytecode import ByteCode
 
 
@@ -33,13 +34,14 @@ class Variable(Symbol):
         return Variable(new_name, self.value_type)
 
     def __repr__(self):
-        return "Variable<{self.name} = {self.value_type}".format(
+        return "Var<{self.name} = {self.value_type}>".format(
             self=self
         )
 
 
 class Argument:
     """ Аргумент для функции """
+
     def __init__(self, name: str, var_type: Type['AbstractBrType']):
         self.name = name
         self.var_type = var_type
@@ -53,7 +55,7 @@ class Argument:
         )
 
     def __str__(self):
-        return "{self.var_type.__name__} {self.name}".format(
+        return "{self.var_type.name} {self.name}".format(
             self=self
         )
 
@@ -71,13 +73,15 @@ class FunctionLifeTime(Enum):
 
 class Function(Symbol):
     """ функция """
+
     def __init__(self,
                  name: str,
                  arguments: List[Argument],
                  _type: FunctionType,
                  lifetime: FunctionLifeTime,
                  source: List[Line] or None = None,
-                 code: List[Expression] or List[List[Expression]] or None = None,
+                 code: List[Expression] or List[
+                     List[Expression]] or None = None,
                  builtin: bool = False
                  ):
         self.name = name
@@ -88,34 +92,33 @@ class Function(Symbol):
         self.code = code
         self.builtin = builtin
 
-    def check_args(self,
-                   params: List[Token],
-                   namespace: 'NameSpace' = None
-                   ) -> Dict[str, Variable]:
+    def check_args(self, context: 'Context') -> Dict[str, Variable]:
         variables = {}
-        if len(self.arguments) != len(params):
+        tokens = context.expr.args
+        if len(self.arguments) != len(tokens):
             raise ParserArgumentCheckLenException(
                 self,
-                params
+                tokens
             )
         # try:
-        for arg, var_token in zip(self.arguments, params):
+        for arg, arg_token in zip(self.arguments, tokens):
             # maybe var_token is identifer?
             from br_types import IdentifierBrType
             try:
-                identifier = IdentifierBrType(var_token)
-                variable = namespace.get_var(identifier)
+                identifier = IdentifierBrType(arg_token)
+                variable = context.ns.get_var(identifier)
                 # При передаче в аргумент другого аргумента
                 variable = variable.renamed(arg.name)
                 if not isinstance(variable.value_type, arg.var_type):
                     raise ParserArgumentTypeEqException(arg.var_type,
-                                                        type(variable.value_type))
+                                                        type(
+                                                            variable.value_type))
 
             except (ParserVariableNotFoundException,
                     IdentifierNameErrorException):
                 # This is not identifier, try to parse directly
                 try:
-                    variable = arg.apply(var_token)
+                    variable = arg.apply(arg_token)
                 except BaseTypesException as e2:
                     raise e2
 
@@ -123,24 +126,17 @@ class Function(Symbol):
         # except Exception as e:
         #     raise ParserArgumentCheckTypeException(
         #         self,
-        #         params,
+        #         args,
         #         exc=e
         #     )
         # finally:
         #     pass
         return variables
 
-    def compile(self,
-                variables: Dict[str, Variable],
-                namespace: 'NameSpace' = None
-                ) -> List[ByteCode]:
+    def compile(self, context: 'Context') -> List[ByteCode]:
         return NotImplemented
 
-    def compile_block(self,
-                      variables: Dict[str, Variable],
-                      block_inside: List[Expression] or None = None,
-                      namespace: 'NameSpace' = None
-                      ) -> List[ByteCode]:
+    def compile_block(self, context: 'Context') -> List[ByteCode]:
         return NotImplemented
 
     def __str__(self):
@@ -157,7 +153,8 @@ class Function(Symbol):
             type=self.type.name.lower(),
             lifetime=self.lifetime.name.lower(),
             name=self.name,
-            arguments=", ".join([str(arg) for arg in self.arguments] or ["No Arguments"]),
+            arguments=", ".join(
+                [str(arg) for arg in self.arguments] or ["No Arguments"]),
             lines_len=lines_len
         )
         return about
@@ -240,4 +237,3 @@ class NameSpace:
     def create_namespace(self) -> 'NameSpace':
         ns = NameSpace(self)
         return ns
-

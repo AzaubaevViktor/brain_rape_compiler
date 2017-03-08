@@ -52,6 +52,9 @@ class ByteCode:
             return ""
 
     def __str__(self):
+        return repr(self)[2:]
+
+    def __repr__(self):
         if self.PLUS == self.op:
             if self.arg >= 0:
                 return "BC(+, {})".format(self.arg)

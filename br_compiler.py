@@ -115,8 +115,8 @@ class Context:
         self.parent = parent
         self.childs = []  # type: List[Context]
         self.expr = expr  # type: Expression
-        self.func = None  # type: Function or None
-        self.args = None  # type: List[Argument] or None
+        self.func = None  # type: Function
+        self.vars = None  # type: Dict[str, Variable] or None
         # NameSpace здесь создаётся именно для ПОТОМКОВ, NameSpace, в контексте
         # оторого выполняется данное выражение находится на уровень выше
         # Предназначен только для ДОБАВЛЕНИЯ В НЕГО НОВЫХ ПЕРЕМЕННЫХ
@@ -136,21 +136,24 @@ class Context:
         self.childs.append(cntx)
         return cntx
 
+    def _determine_function(self):
+        self.func = self.ns.get_func(self.expr.func_token)
+
     def compile(self):
         # found function
-        self.func = self.ns.get_func(self.expr.func_token)
+        self._determine_function()
         if isinstance(self.expr, Line):
             if self.func.builtin:
                 # Builtin, NoBlock
-                self.args = self.func.check_args(self.expr.args, self.ns)
-                self.bytecode = self.func.compile(self.args, self.ns)
+                self.vars = self.func.check_args(self)
+                self.bytecode = self.func.compile(self)
             else:
                 # No builtin, NoBlock
                 if FunctionType.NO_BLOCK != self.func.type:
                     print("Error, function is not no_block!")
                     # raise Error
-                self.args = self.func.check_args(self.expr.args, self.ns)
-                self.ch_ns.symbols_push(self.args.values())
+                self.vars = self.func.check_args(self)
+                self.ch_ns.symbols_push(self.vars.values())
 
                 for expr in self.func.code:
                     cntx = self.create_child(expr)
@@ -159,25 +162,21 @@ class Context:
         elif isinstance(self.expr, Block):
             if self.func.builtin:
                 # Builtin, Block
-                self.args = self.func.check_args(self.expr.args)
-                self.bytecode = self.func.compile_block(
-                    self.args,
-                    self.expr.block_lines,
-                    self.ch_ns
-                )
+                self.vars = self.func.check_args(self)
+                self.bytecode = self.func.compile_block(self)
             else:
                 # not builtin block
                 if FunctionType.BLOCK != self.func.type:
                     print("Error, function is not block!")
                     # raise Error
-                self.args = self.func.check_args(self.expr.args)
+                self.vars = self.func.check_args(self)
                 code = []
                 for part in self.func.code[:-1]:
                     code += part
                     code += self.expr.block_lines
                 code += self.func.code[-1]
 
-                self.ch_ns.symbols_push(self.args.values())
+                self.ch_ns.symbols_push(self.vars.values())
 
                 for expr in code:
                     cntx = self.create_child(expr)
@@ -186,8 +185,14 @@ class Context:
     def __str__(self):
         btcode = " ".join([str(b) for b in self.bytecode])
         btcode = btcode + "\n" if btcode else btcode
-        return "{self.func}\n{self.args}\n{btcode}".format(
+        vars = []
+        if self.func:
+            for arg in self.func.arguments:
+                vars.append(self.vars[arg.name])
+
+        return "{self.func}\n{vars}\n{btcode}".format(
             self=self,
+            vars=vars,
             btcode=btcode or "--->"
         )
 
@@ -209,7 +214,7 @@ class Context:
         return lines
 
     def full_bytecode(self):
-        bytecode = self.bytecode
+        bytecode = self.bytecode[:]
         for cntx in self.childs:
             bytecode += cntx.full_bytecode()
         return bytecode

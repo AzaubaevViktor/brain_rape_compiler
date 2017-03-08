@@ -31,7 +31,7 @@ class AbstractBrType(metaclass=abc.ABCMeta):
         pass
 
     def __str__(self):
-        return "Type<{}>:{}".format(self.name, self.value)
+        return "(T{}):`{}`".format(self.name, self.value)
 
 
 class IntBrType(AbstractBrType):
