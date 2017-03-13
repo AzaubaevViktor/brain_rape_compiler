@@ -40,7 +40,7 @@ class Line(Expression):
         self.line_n = line_n
         self._level = None  # type: int
         self.tokens = []  # type: List[Token]
-        self.source = source
+        self.source = source.rstrip()
 
         self._calc_level()
         self._calc_tokens()

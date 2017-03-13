@@ -24,8 +24,10 @@ class BlockLevelError(_BaseLexer):
         self.cur_line = cur_line
 
     def __str__(self):
-        return "Неверная последовательность уровней вложенности:" \
-               "`{prev_line.level}` перед `{cur_line.level}`" \
+        return "Неверная последовательность уровней вложенности:\n" \
+               "{prev_line.line_n}: `{prev_line.source}`\n" \
+               "{cur_line.line_n}: `{cur_line.source}`\n" \
+               "Уровень `{prev_line.level}` перед уровнем `{cur_line.level}`" \
                " в строке `{cur_line.line_n}`".format(
             prev_line=self.prev_line,
             cur_line=self.cur_line
