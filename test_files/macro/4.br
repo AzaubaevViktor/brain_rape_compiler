@@ -6,4 +6,4 @@ macro global first address res address b address c int d
 
 first :0 :1 :2 5
 
-#! test_MEMORY _ 6 7
+#! test_MEMORYL _ 6 7
