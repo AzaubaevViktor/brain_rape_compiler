@@ -1,0 +1,8 @@
+_add :1 10
+macroblock global t address a int b
+    code
+
+t :1 20
+    _add a b 20 30
+
+#! test_EXCEPTION ArgumentLenError

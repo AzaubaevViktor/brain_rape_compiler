@@ -15,6 +15,9 @@ class Token:
     def __str__(self):
         return "{}".format(self.text)
 
+    def __len__(self):
+        return len(self.text)
+
 
 class Expression(metaclass=abc.ABCMeta):
     @property
@@ -106,6 +109,14 @@ class Block(Expression):
 
     def pop(self) -> Line or 'Block':
         return self.block_lines.pop()
+
+    @property
+    def line_n(self) -> int:
+        return self.first_line.line_n
+
+    @property
+    def tokens(self) -> List[Token]:
+        return self.first_line.tokens
 
     @property
     def func_token(self) -> Token:

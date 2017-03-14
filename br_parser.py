@@ -2,8 +2,10 @@ import abc
 from enum import Enum
 from typing import List, Dict, Type, TypeVar, Tuple, Any, Iterator, Iterable
 
-from br_exceptions.parser import ParserArgumentCheckLenException, \
-    ParserArgumentCheckTypeException, \
+from br_exceptions import parser as parser_e
+
+from br_exceptions.parser import \
+    ArgumentCheckTypeError, \
     ParserSymbolNotFoundException, ParserFunctionNotFoundException, \
     ParserVariableNotFoundException, ParserArgumentTypeEqException
 from br_exceptions.types import BaseTypesException, IdentifierNameErrorException
@@ -80,8 +82,8 @@ class Function(Symbol):
                  _type: FunctionType,
                  lifetime: FunctionLifeTime,
                  source: List[Line] or None = None,
-                 code: List[Expression] or List[
-                     List[Expression]] or None = None,
+                 code: List[Expression] or
+                       List[List[Expression]] or None = None,
                  builtin: bool = False
                  ):
         self.name = name
@@ -96,9 +98,9 @@ class Function(Symbol):
         variables = {}
         tokens = context.expr.args
         if len(self.arguments) != len(tokens):
-            raise ParserArgumentCheckLenException(
-                self,
-                tokens
+            raise parser_e.ArgumentLenError(
+                context,
+                token=tokens[len(self.arguments)]
             )
         # try:
         for arg, arg_token in zip(self.arguments, tokens):
@@ -143,12 +145,14 @@ class Function(Symbol):
 
         lines_len = len(self.source)
 
-        about = "{is_builtin}" \
+        about = "{line_n}: " \
+                "{is_builtin}" \
                 "{lifetime} " \
                 "{type} " \
                 "Function " \
                 "{name}" \
                 "({arguments}); {lines_len} lines inside".format(
+            line_n=self.source[0].line_n if self.source else "!!",
             is_builtin="Builtin " if self.builtin else "",
             type=self.type.name.lower(),
             lifetime=self.lifetime.name.lower(),

@@ -5,6 +5,7 @@ from br_lexer import Block, Expression
 from br_parser import Function, Argument
 from br_parser import Token, Line, NameSpace, FunctionType
 from br_exceptions import lexer as lexer_e
+from br_parser import Variable
 from builtin_functions import builtin_functions
 from builtin_variables import builtin_variables
 from bytecode import ByteCode
@@ -71,7 +72,7 @@ class Context:
         self.childs = []  # type: List[Context]
         self.expr = expr  # type: Expression
         self.func = None  # type: Function
-        self.vars = None  # type: Dict[str, Variable] or None
+        self.vars = {}  # type: Dict[str, Variable]
         # NameSpace здесь создаётся именно для ПОТОМКОВ, NameSpace, в контексте
         # оторого выполняется данное выражение находится на уровень выше
         # Предназначен только для ДОБАВЛЕНИЯ В НЕГО НОВЫХ ПЕРЕМЕННЫХ
@@ -167,6 +168,40 @@ class Context:
             lines += cntx.debug_print(level + 1)
 
         return lines
+
+    def error_info(self, token=None):
+        s = " === COMPILER STACK TRACE ===\n"
+        _trace = []
+        cur_cntx = self
+        while cur_cntx.parent:
+            _trace = ["  " + _el for _el in _trace]
+            _vars = ["{var.name} => {var.value_type}".format(var=var) for var in
+                     cur_cntx.vars.values()]
+            _trace = \
+                [str(cur_cntx.func)] \
+                + _vars \
+                + _trace
+            cur_cntx = cur_cntx.parent
+        s += "\n".join(_trace) + "\n"
+
+        s += " === LINE ===\n"
+
+        expr = self.expr
+        line_n = "{}: ".format(self.expr.line_n)
+        level_tab = "   •" * expr._level
+        sourcer = " ".join([t.text for t in expr.tokens])
+        s += "{line_n}`{level_tab}{sourcer}`".format(
+            line_n=line_n,
+            level_tab=level_tab,
+            sourcer=sourcer
+        )
+        s += "\n"
+        s += " " * (len(line_n) + len(level_tab) + 1)
+        for t in expr.tokens:
+            s += ("^" if t == token else " ") * len(t)
+            s += " "
+
+        return s
 
     def full_bytecode(self):
         bytecode = self.bytecode[:]

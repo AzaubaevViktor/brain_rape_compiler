@@ -1,9 +1,9 @@
 class Base(Exception):
     fmt = "This is msg from base exception, check compiler code"
 
-    def __init__(self, context: 'Context', **kwargs):
-        self.cntx = context
-        self.str = str
+    def __init__(self, context: 'Context', token=None, **kwargs):
+        self.context = context
+        self.token = token
         self._kwargs = kwargs
         for k, v in kwargs.items():
             self.__setattr__(k, v)

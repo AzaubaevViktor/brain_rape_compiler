@@ -39,6 +39,7 @@ def file_execute(file_name, test: BrTests):
 
     except Exception as e:
         assert e.__class__.__name__ == test.exc_name
+        assert str(e)
         print("Exception '{test.exc_name}' catched".format(test=test))
         print(" ====== ")
         return

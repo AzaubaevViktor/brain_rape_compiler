@@ -1,6 +1,6 @@
 import sys
 import traceback
-from typing import Dict
+from typing import Dict, List
 
 from br_exceptions.parser import *
 from br_lexer import Token, Expression
@@ -174,9 +174,9 @@ class _Macro(Function):
         arg_tokens = context.expr.args
         variables = {}
         if len(arg_tokens) < 2:
-            raise ParserArgumentCheckLenException(self, arg_tokens, 2)
+            raise ArgumentLenError(self, arg_tokens, 2)
         if len(arg_tokens) % 2:
-            raise ParserArgumentCheckLenException(self, arg_tokens, len(arg_tokens) + 1)
+            raise ArgumentLenError(self, arg_tokens, len(arg_tokens) + 1)
 
         params_iter = iter(arg_tokens)
         try:
@@ -196,7 +196,7 @@ class _Macro(Function):
                 pass
         except Exception as e:
             traceback.print_exception(*sys.exc_info())
-            raise ParserArgumentCheckTypeException(
+            raise ArgumentCheckTypeError(
                 self,
                 arg_tokens,
                 exc=e

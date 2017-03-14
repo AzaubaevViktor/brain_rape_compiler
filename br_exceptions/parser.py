@@ -1,40 +1,27 @@
-from typing import List
-
-from br_exceptions.base import Base
+from br_exceptions.base import Base as _Base
 
 
-class BaseParserException(Base):
+class Base(_Base):
     pass
 
 
-class ParserArgumentCheckException(BaseParserException):
-    def __init__(self,
-                 function: 'BrFunction',
-                 params: List['Token'],
-                 number: int = None,
-                 exc: Exception = None
-                 ):
-        self.function = function
-        self.params = params
-        self.number = number  # for functions with variative len
-        self.exc = exc
+class ArgumentCheckError(Base):
+    fmt = "Неверное количество аргументов."
 
+
+class ArgumentLenError(ArgumentCheckError):
     def __str__(self):
-        return "Fuck"
-
-
-class ParserArgumentCheckLenException(ParserArgumentCheckException):
-    def __str__(self):
-        return "Неверное количество аргументов для " \
-               "функции `{func.name}`. Ожидается {expect}, " \
-               "передано `{passed}`".format(
-            func=self.function,
-            expect=len(self.function.arguments) or self.number,
-            passed=len(self.params)
+        s = "Неверное количество агрументов: `{}` вместо `{}`\n".format(
+            len(self.context.expr.args),
+            len(self.context.func.arguments)
         )
 
+        s += self.context.error_info(self.token)
 
-class ParserArgumentCheckTypeException(ParserArgumentCheckException):
+        return s
+
+
+class ArgumentCheckTypeError(ArgumentCheckError):
     def __str__(self):
 
         return "Невозможно сопоставить тип, ошибка:\n====\n" \
@@ -42,7 +29,7 @@ class ParserArgumentCheckTypeException(ParserArgumentCheckException):
                "{}".format(type(self.exc), self.exc)
 
 
-class ParserArgumentTypeEqException(BaseParserException):
+class ParserArgumentTypeEqException(Base):
     def __init__(self,
                  type1: 'BrType',
                  type2: 'BrType'
@@ -59,7 +46,7 @@ class ParserArgumentTypeEqException(BaseParserException):
         )
 
 
-class ParserSymbolNotFoundException(BaseParserException):
+class ParserSymbolNotFoundException(Base):
     _what = "символ"
 
     def __init__(self, token: 'Token'):
