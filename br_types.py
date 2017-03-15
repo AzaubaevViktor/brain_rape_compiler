@@ -8,7 +8,11 @@ from br_parser import FunctionLifeTime
 
 
 class AbstractBrType(metaclass=abc.ABCMeta):
-    """ Умеет парсить и хранить в себе значение определённого типа """
+    """
+    Тип.
+    Представляет собой парсер, который при передаче токена в него
+    определяет значение этого типа.
+    """
     name = None
 
     def __init__(self, token: Token,
@@ -20,11 +24,7 @@ class AbstractBrType(metaclass=abc.ABCMeta):
             self.text = "Token not found, maybe builtin definision?"
         self.value = value  # значение типа
         if self.value is None:
-            try:
-                self._parse()
-            except BaseTypesException as e:
-                e.token = self.token
-                raise e
+            self._parse()
 
     @abc.abstractclassmethod
     def _parse(self):
@@ -107,5 +107,5 @@ class FunctionLifeTimeBrType(AbstractBrType):
         name = self.text
         life_time = self._values.get(name, None)
         if not life_time:
-            raise FunctionLifeTimeErrorException(name)
+            raise FunctionLifeTimeErrorException(self.token)
         self.value = life_time

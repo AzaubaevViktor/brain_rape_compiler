@@ -1,13 +1,9 @@
 import abc
 from enum import Enum
-from typing import List, Dict, Type, TypeVar, Tuple, Any, Iterator, Iterable
+from typing import List, Dict, Type, TypeVar, Tuple, Any, Iterator, Iterable, T
 
 from br_exceptions import parser as parser_e
 
-from br_exceptions.parser import \
-    ArgumentCheckTypeError, \
-    ParserSymbolNotFoundException, ParserFunctionNotFoundException, \
-    ParserVariableNotFoundException, ParserArgumentTypeEqException
 from br_exceptions.types import BaseTypesException, IdentifierNameErrorException
 from br_lexer import Line, Token, Expression
 from bytecode import ByteCode
@@ -20,6 +16,9 @@ class Symbol(metaclass=abc.ABCMeta):
 
 
 class Variable(Symbol):
+    """
+    Переменная. Хранит название переменной и экземпляр типа
+    """
     def __init__(self, name: str, value_type: 'AbstractBrType'):
         self.name = name
         self.value_type = value_type
@@ -42,14 +41,18 @@ class Variable(Symbol):
 
 
 class Argument:
-    """ Аргумент для функции """
+    """
+    Аргумент для функции
+    Представляет собой имя будущей переменной и класс-наследник типа
+    Служит для обработки токенов, переданных в функцию
+    """
 
-    def __init__(self, name: str, var_type: Type['AbstractBrType']):
+    def __init__(self, name: str, value_class: Type['AbstractBrType']):
         self.name = name
-        self.var_type = var_type
+        self.value_class = value_class
 
-    def apply(self, token: Token) -> Variable:
-        return Variable(self.name, self.var_type(token))
+    def get_var(self, token: Token) -> Variable:
+        return Variable(self.name, self.value_class(token))
 
     def __repr__(self):
         return "Argument<{about}>".format(
@@ -57,7 +60,7 @@ class Argument:
         )
 
     def __str__(self):
-        return "{self.var_type.name} {self.name}".format(
+        return "{self.value_class.name} {self.name}".format(
             self=self
         )
 
@@ -102,37 +105,34 @@ class Function(Symbol):
                 context,
                 token=tokens[len(self.arguments)]
             )
-        # try:
-        for arg, arg_token in zip(self.arguments, tokens):
-            # maybe var_token is identifer?
-            from br_types import IdentifierBrType
-            try:
-                identifier = IdentifierBrType(arg_token)
-                variable = context.ns.get_var(identifier)
-                # При передаче в аргумент другого аргумента
-                variable = variable.renamed(arg.name)
-                if not isinstance(variable.value_type, arg.var_type):
-                    raise ParserArgumentTypeEqException(arg.var_type,
-                                                        type(
-                                                            variable.value_type))
 
-            except (ParserVariableNotFoundException,
-                    IdentifierNameErrorException):
-                # This is not identifier, try to parse directly
+        from br_types import IdentifierBrType
+
+        try:
+            for arg, arg_token in zip(self.arguments, tokens):  # type: Tuple[Argument, Token]
+
+                # maybe var_token is identifer?
                 try:
-                    variable = arg.apply(arg_token)
-                except BaseTypesException as e2:
-                    raise e2
+                    identifier = IdentifierBrType(arg_token)
+                    variable = context.ns.get_var(identifier)  # type: Variable
+                    # При передаче в аргумент другого аргумента
+                    variable = variable.renamed(arg.name)
+                    if not isinstance(variable.value_type, arg.value_class):
+                        raise parser_e.ArgumentCheckTypeError(
+                            arg.value_class,
+                            type(variable.value_type))
 
-            variables[arg.name] = variable
-        # except Exception as e:
-        #     raise ParserArgumentCheckTypeException(
-        #         self,
-        #         args,
-        #         exc=e
-        #     )
-        # finally:
-        #     pass
+                except IdentifierNameErrorException as e:
+                    # This is not identifier, try to parse directly
+                    variable = arg.get_var(arg_token)
+
+                variables[arg.name] = variable
+        except Exception as e:
+            e.context = context
+            e.token = arg_token
+            raise e
+        finally:
+            pass
         return variables
 
     def compile(self, context: 'Context') -> List[ByteCode]:
@@ -209,7 +209,7 @@ class NameSpace:
         if symbol:
             return symbol
         else:
-            raise ParserSymbolNotFoundException(item)
+            raise parser_e.SymbolNotFoundException(item)
 
     def get_vars(self) -> Iterator[Variable]:
         for symbol in self.symbols.values():
@@ -221,13 +221,13 @@ class NameSpace:
     def get_func(self, token: Token) -> Function:
         func = self.get(token)
         if not isinstance(func, Function):
-            raise ParserFunctionNotFoundException(token)
+            raise parser_e.FunctionNotFoundError(token)
         return func
 
     def get_var(self, identifier: 'IdentifierBrType') -> Variable:
         var = self.get(identifier.token)
         if not isinstance(var, Variable):
-            raise ParserVariableNotFoundException(identifier.token)
+            raise parser_e.VariableNotFoundError(identifier.token)
         return var
 
     def get_address_value(self, addr: 'AddressBrType') -> int:

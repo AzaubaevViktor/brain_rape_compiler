@@ -2,7 +2,7 @@ from br_compiler import FileCompiler, Lexer
 from executor import Interpreter
 
 if __name__ == "__main__":
-    file_name = 'test_files/exc/p_arg_len2.br'
+    file_name = 'test_files/register/1.br'
     block = None
     with open(file_name, 'rt') as f:
         l = Lexer(f.readlines())

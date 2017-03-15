@@ -23,30 +23,12 @@ class ArgumentLenError(ArgumentCheckError):
 
 class ArgumentCheckTypeError(ArgumentCheckError):
     def __str__(self):
-
         return "Невозможно сопоставить тип, ошибка:\n====\n" \
                "{}\n" \
                "{}".format(type(self.exc), self.exc)
 
 
-class ParserArgumentTypeEqException(Base):
-    def __init__(self,
-                 type1: 'BrType',
-                 type2: 'BrType'
-                 ):
-        self.type1 = type1
-        self.type2 = type2
-
-    def __str__(self):
-        return "Несовместимые типы. " \
-               "Ожидается {}, " \
-               "передано {}".format(
-            self.type1,
-            self.type2
-        )
-
-
-class ParserSymbolNotFoundException(Base):
+class SymbolNotFoundException(Base):
     _what = "символ"
 
     def __init__(self, token: 'Token'):
@@ -54,14 +36,20 @@ class ParserSymbolNotFoundException(Base):
 
     def __str__(self):
         return "Невозможно найти {} с именем `{}`".format(
-            self._what,
+            self.__class__._what,
             self.token.text
         )
 
 
-class ParserFunctionNotFoundException(ParserSymbolNotFoundException):
+class FunctionNotFoundError(SymbolNotFoundException):
     _what = "функцию"
 
 
-class ParserVariableNotFoundException(ParserSymbolNotFoundException):
+class VariableNotFoundError(SymbolNotFoundException):
     _what = "переменную"
+
+    def __str__(self):
+        s = super().__str__()
+        s += "\n"
+        s += self.context.error_info(self.token)
+        return s
