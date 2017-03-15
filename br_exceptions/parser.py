@@ -29,8 +29,8 @@ class ArgumentParseError(ArgumentCheckError):
 
     def __str__(self):
         s = "Ошибка разбора аргумента.\n"
-        s += "Либо:\n{}\n".format(str(self.type_error))
-        s += "Либо:\n{}\n".format(str(self.identifier_error))
+        s += "Либо:\n{}\n".format(repr(self.type_error))
+        s += "Либо:\n{}\n".format(repr(self.identifier_error))
         s += self.context.error_info(self.token)
 
         return s

@@ -188,7 +188,7 @@ class Context:
 
         expr = self.expr
         line_n = "{}: ".format(self.expr.line_n)
-        level_tab = "   •" * expr._level
+        level_tab = "   •" * expr.level
         sourcer = " ".join([t.text for t in expr.tokens])
         s += "{line_n}`{level_tab}{sourcer}`".format(
             line_n=line_n,

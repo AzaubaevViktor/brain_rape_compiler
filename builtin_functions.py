@@ -195,12 +195,8 @@ class _Macro(Function):
             except StopIteration:
                 pass
         except Exception as e:
-            traceback.print_exception(*sys.exc_info())
-            raise ArgumentCheckTypeError(
-                self,
-                arg_tokens,
-                exc=e
-            )
+            e.context = context
+            raise e
 
         return variables
 
