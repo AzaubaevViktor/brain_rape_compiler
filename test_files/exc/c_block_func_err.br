@@ -1,0 +1,8 @@
+macroblock global test
+    _add :0 0
+    code
+    _add :0 0
+
+test
+
+#! test_EXCEPTION BlockFunctionError

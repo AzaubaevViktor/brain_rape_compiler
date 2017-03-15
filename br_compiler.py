@@ -5,6 +5,7 @@ from br_lexer import Block, Expression
 from br_parser import Function, Argument
 from br_parser import Token, Line, NameSpace, FunctionType
 from br_exceptions import lexer as lexer_e
+from br_exceptions import compiler as compiler_e
 from br_parser import Variable
 from builtin_functions import builtin_functions
 from builtin_variables import builtin_variables
@@ -106,7 +107,8 @@ class Context:
             else:
                 # No builtin, NoBlock
                 if FunctionType.NO_BLOCK != self.func.type:
-                    print("Error, function is not no_block!")
+                    raise compiler_e.BlockFunctionError(
+                        context=self, function=self.func)
                     # raise Error
                 self.vars = self.func.check_args(self)
                 self.ch_ns.symbols_push(self.vars.values())
@@ -123,7 +125,8 @@ class Context:
             else:
                 # not builtin block
                 if FunctionType.BLOCK != self.func.type:
-                    print("Error, function is not block!")
+                    raise compiler_e.NoBlockFunctionError(
+                        context=self, function=self.func)
                     # raise Error
                 self.vars = self.func.check_args(self)
                 code = []
