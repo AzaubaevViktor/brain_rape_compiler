@@ -41,12 +41,12 @@ class IntBrType(AbstractBrType):
         try:
             self.value = int(self.token.text)
         except ValueError:
-            IntParseException(self.token)
+            raise IntParseError(self.token)
 
 
 class _RegexprBrType(AbstractBrType):
     regexp = re.compile(r'')
-    exception_class = BaseTypesException
+    exception_class = BaseTypesError
 
     def _parse(self):
         match = self.regexp.match(self.text)
@@ -61,18 +61,19 @@ class _RegexprBrType(AbstractBrType):
 class StrBrType(_RegexprBrType):
     name = 'str'
     regexp = re.compile(r'"(.*)"')
-    exception_class = StrParseException
+    exception_class = StrParseError
 
 
 class IdentifierBrType(_RegexprBrType):
     name = "identifier"
     regexp = re.compile(r'([A-z]\w*)')
-    exception_class = IdentifierNameErrorException
+    exception_class = IdentifierNameError
 
 
 class AddressBrType(_RegexprBrType):
     name = "address"
     regexp = re.compile(r':(\d+)')
+    exception_class = AddressError
 
     def _parse(self):
         super()._parse()
@@ -92,7 +93,7 @@ class BrTypeBrType(AbstractBrType):
         type_name = self.text
         tp = self._types.get(type_name, None)
         if not tp:
-            raise TypeNameErrorException(self.token)
+            raise TypeNameError(self.token)
         self.value = tp
 
 # Здесь внутренние типы, которые нельзя использовать в программе
@@ -107,5 +108,5 @@ class FunctionLifeTimeBrType(AbstractBrType):
         name = self.text
         life_time = self._values.get(name, None)
         if not life_time:
-            raise FunctionLifeTimeErrorException(self.token)
+            raise FunctionLifeTimeError(self.token)
         self.value = life_time

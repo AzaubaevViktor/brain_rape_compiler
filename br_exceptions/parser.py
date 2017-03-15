@@ -21,6 +21,21 @@ class ArgumentLenError(ArgumentCheckError):
         return s
 
 
+class ArgumentParseError(ArgumentCheckError):
+    def __init__(self, type_error: 'BaseTypeError',
+                 identifier_error: 'IdentifierNameError'):
+        self.type_error = type_error
+        self.identifier_error = identifier_error
+
+    def __str__(self):
+        s = "Ошибка разбора аргумента.\n"
+        s += "Либо:\n{}\n".format(str(self.type_error))
+        s += "Либо:\n{}\n".format(str(self.identifier_error))
+        s += self.context.error_info(self.token)
+
+        return s
+
+
 class ArgumentCheckTypeError(ArgumentCheckError):
     def __str__(self):
         return "Невозможно сопоставить тип, ошибка:\n====\n" \

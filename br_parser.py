@@ -4,7 +4,7 @@ from typing import List, Dict, Type, TypeVar, Tuple, Any, Iterator, Iterable, T
 
 from br_exceptions import parser as parser_e
 
-from br_exceptions.types import BaseTypesException, IdentifierNameErrorException
+from br_exceptions.types import BaseTypesError, IdentifierNameError
 from br_lexer import Line, Token, Expression
 from bytecode import ByteCode
 
@@ -108,12 +108,18 @@ class Function(Symbol):
 
         from br_types import IdentifierBrType
 
+        error_arg_token = None
         try:
             for arg, arg_token in zip(self.arguments, tokens):  # type: Tuple[Argument, Token]
-
-                # maybe var_token is identifer?
+                error_arg_token = arg_token
                 try:
-                    identifier = IdentifierBrType(arg_token)
+                    variable = arg.get_var(arg_token)
+                except BaseTypesError as bte:
+                    try:
+                        identifier = IdentifierBrType(arg_token)
+                    except BaseTypesError as ie:
+                        raise parser_e.ArgumentParseError(bte, ie)
+
                     variable = context.ns.get_var(identifier)  # type: Variable
                     # При передаче в аргумент другого аргумента
                     variable = variable.renamed(arg.name)
@@ -122,14 +128,10 @@ class Function(Symbol):
                             arg.value_class,
                             type(variable.value_type))
 
-                except IdentifierNameErrorException as e:
-                    # This is not identifier, try to parse directly
-                    variable = arg.get_var(arg_token)
-
                 variables[arg.name] = variable
         except Exception as e:
             e.context = context
-            e.token = arg_token
+            e.token = error_arg_token
             raise e
         finally:
             pass
