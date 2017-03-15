@@ -1,0 +1,5 @@
+reg test  # type: address
+
+_add :1 test  # error: must be int, but `test` is address
+
+#! test_EXCEPTION ArgumentCheckTypeError

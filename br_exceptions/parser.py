@@ -37,10 +37,20 @@ class ArgumentParseError(ArgumentCheckError):
 
 
 class ArgumentCheckTypeError(ArgumentCheckError):
+    def __init__(self, need: 'AbstractType',
+                 accepted: 'AbstractBrType'
+                 ):
+        self.need = need
+        self.accepted = accepted
+
     def __str__(self):
-        return "Невозможно сопоставить тип, ошибка:\n====\n" \
-               "{}\n" \
-               "{}".format(type(self.exc), self.exc)
+        s = "Несовместимые типы.\n"
+        s += "Ожидается: `{}`\n".format(self.need.name)
+        s += "Передано:  `{}`\n".format(self.accepted.name)
+
+        s += self.context.error_info(self.token)
+
+        return s
 
 
 class SymbolNotFoundException(Base):
