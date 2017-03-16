@@ -1,5 +1,3 @@
-import sys
-import traceback
 from typing import Dict, List
 
 from br_exceptions.parser import *
@@ -18,7 +16,7 @@ class _Nope(Function):
         ]
 
 nope = _Nope(
-    'nope',
+    '__nope',
     [],
     FunctionType.NO_BLOCK,
     FunctionLifeTime.GLOBAL,
@@ -26,20 +24,16 @@ nope = _Nope(
 )
 
 
-class _Add(Function):
+class _Plus(Function):
     def compile(self, context: 'Context') -> List[B]:
-        addr = context.vars['addr'].value
         value = context.vars['value'].value
         return [
-            B(">", addr),
             B("+", value),
-            B("<", addr)
         ]
 
-add = _Add(
-    '_add',
+plus = _Plus(
+    '__plus',
     [
-        Argument('addr', AddressBrType),
         Argument('value', IntBrType)
     ],
     FunctionType.NO_BLOCK,
@@ -48,26 +42,17 @@ add = _Add(
 )
 
 
-class _Mov(Function):
+class _Minus(Function):
     def compile(self, context: 'Context') -> List[B]:
-        to_addr = context.vars['to_addr'].value
-        from_addr = context.vars['from_addr'].value
+        value = context.vars['value'].value
         return [
-            B(">", from_addr - 0),  # Move to from_addr
-            B("[", 0),  # While *from_addr not null, do
-            B("-", 1),  # *from_addr -= 1
-            B(">", to_addr - from_addr),  # go to to_addr
-            B("+", 1),  # *to_addr += 1
-            B(">", from_addr - to_addr),  # go to from_addr
-            B("]", 0),  # if *from_addr == null then end
-            B(">", 0 - from_addr)  # move to 0
+            B("-", value),
         ]
 
-mov = _Mov(
-    '_mov',
+minus = _Minus(
+    '__minus',
     [
-        Argument('to_addr', AddressBrType),
-        Argument('from_addr', AddressBrType)
+        Argument('value', IntBrType)
     ],
     FunctionType.NO_BLOCK,
     FunctionLifeTime.GLOBAL,
@@ -75,30 +60,17 @@ mov = _Mov(
 )
 
 
-class _Mov2(Function):
+class _MovAbs(Function):
     def compile(self, context: 'Context') -> List[B]:
-        to1_addr = context.vars['to1_addr'].value
-        to2_addr = context.vars['to2_addr'].value
-        from_addr = context.vars['from_addr'].value
+        value = context.vars['value'].value
         return [
-            B(">", from_addr - 0),  # Move to from_addr
-            B("["),  # While *from_addr not null, do
-            B("-", 1),  # *from_addr -= 1
-            B(">", to1_addr - from_addr),  # go to to1_addr
-            B("+", 1),  # *to1_addr += 1
-            B(">", to2_addr - to1_addr),  # goto to2_addr
-            B("+", 1),  # *to2_addr += 1
-            B(">", from_addr - to2_addr),  # go to from_addr
-            B("]"),  # if *from_addr == null then end
-            B(">", 0 - from_addr)  # move to 0
+            B(">", value),
         ]
 
-mov2 = _Mov2(
-    '_mov2',
+mov_abs = _MovAbs(
+    '__movabs',
     [
-        Argument('to1_addr', AddressBrType),
-        Argument('to2_addr', AddressBrType),
-        Argument('from_addr', AddressBrType)
+        Argument('value', IntBrType)
     ],
     FunctionType.NO_BLOCK,
     FunctionLifeTime.GLOBAL,
@@ -106,21 +78,37 @@ mov2 = _Mov2(
 )
 
 
-class _Null(Function):
+class _MovAbsL(Function):
     def compile(self, context: 'Context') -> List[B]:
-        addr = context.vars['addr'].value
+        value = context.vars['value'].value
         return [
-            B(">", addr - 0),   # goto addr
-            B("["),   # [
-            B("-", 1),     # -
-            B("]"),  # ]
-            B(">", 0 - addr)   # goto 0
+            B("<", value),
         ]
 
-null = _Null(
-    '_null',
+mov_abs_l = _MovAbsL(
+    '__movabsl',
     [
-        Argument('addr', AddressBrType)
+        Argument('value', IntBrType)
+    ],
+    FunctionType.NO_BLOCK,
+    FunctionLifeTime.GLOBAL,
+    builtin=True
+)
+
+
+class _Move(Function):
+    def compile(self, context: 'Context') -> List[B]:
+        addr_to = context.vars['to'].value
+        addr_from = context.vars['from'].value
+        return [
+            B(">", addr_to - addr_from),
+        ]
+
+move = _Move(
+    '__move',
+    [
+        Argument('to', AddressBrType),
+        Argument('from', AddressBrType),
     ],
     FunctionType.NO_BLOCK,
     FunctionLifeTime.GLOBAL,
@@ -130,18 +118,13 @@ null = _Null(
 
 class _Print(Function):
     def compile(self, context: 'Context') -> List[B]:
-        addr = context.vars['addr'].value
         return [
-            B(">", addr - 0),    # goto addr
-            B("."),           # print from addr
-            B(">", 0 - addr)     # goto 0
+            B("."),
         ]
 
 _print = _Print(
-    '_print',
-    [
-        Argument('addr', AddressBrType)
-    ],
+    '__print',
+    [],
     FunctionType.NO_BLOCK,
     FunctionLifeTime.GLOBAL,
     builtin=True
@@ -150,19 +133,44 @@ _print = _Print(
 
 class _Read(Function):
     def compile(self, context: 'Context') -> List[B]:
-        addr = context.vars['addr'].value
         return [
-            B(">", addr - 0),
             B(","),
-            B(">", 0 - addr)
         ]
 
 
-_read = _Read(
-    '_read',
-    [
-        Argument('addr', AddressBrType)
-    ],
+read = _Read(
+    '__read',
+    [],
+    FunctionType.NO_BLOCK,
+    FunctionLifeTime.GLOBAL,
+    builtin=True
+)
+
+
+class _CycleStart(Function):
+    def compile(self, context: 'Context'):
+        return [
+            B("[")
+        ]
+
+cycle_start = _CycleStart(
+    "__cycle_start",
+    [],
+    FunctionType.NO_BLOCK,
+    FunctionLifeTime.GLOBAL,
+    builtin=True
+)
+
+
+class _CycleEnd(Function):
+    def compile(self, context: 'Context'):
+        return [
+            B("]")
+        ]
+
+cycle_end = _CycleEnd(
+    "__cycle_end",
+    [],
     FunctionType.NO_BLOCK,
     FunctionLifeTime.GLOBAL,
     builtin=True
@@ -208,13 +216,13 @@ class _Macro(Function):
 
         block_inside = context.expr.block_lines
         func = Function(
-                function_name,
-                arguments,
-                FunctionType.NO_BLOCK,
-                lifetime,
-                source=block_inside,
-                code=block_inside,
-            )
+            function_name,
+            arguments,
+            FunctionType.NO_BLOCK,
+            lifetime,
+            source=block_inside,
+            code=block_inside,
+        )
 
         context.ns.symbol_lifetime_push(lifetime, func)
 
@@ -224,7 +232,7 @@ class _Macro(Function):
               ),
         ]
 
-_macro = _Macro(
+macro = _Macro(
     "macro",
     [],  # because custom check_args
     FunctionType.BLOCK,
@@ -250,13 +258,13 @@ class _MacroBlock(_Macro):
                 code[-1].append(expr)
 
         func = Function(
-                function_name,
-                arguments,
-                FunctionType.BLOCK,
-                lifetime,
-                source=block_inside,
-                code=code,
-            )
+            function_name,
+            arguments,
+            FunctionType.BLOCK,
+            lifetime,
+            source=block_inside,
+            code=code,
+        )
 
         context.ns.symbol_lifetime_push(lifetime, func)
 
@@ -267,7 +275,7 @@ class _MacroBlock(_Macro):
         ]
 
 
-_macroblock = _MacroBlock(
+macroblock = _MacroBlock(
     "macroblock",
     [],  # because custom check_args
     FunctionType.BLOCK,
@@ -307,7 +315,7 @@ class _Reg(Function):
         ]
 
 
-_reg = _Reg(
+reg = _Reg(
     'reg',
     [
         Argument('name', IdentifierBrType)
@@ -319,13 +327,16 @@ _reg = _Reg(
 
 builtin_functions = [
     nope,
-    add,
-    mov,
-    mov2,
-    null,
+    plus,
+    minus,
+    mov_abs,
+    mov_abs_l,
+    move,
     _print,
-    _read,
-    _macro,
-    _reg,
-    _macroblock
+    read,
+    cycle_start,
+    cycle_end,
+    macro,
+    reg,
+    macroblock
 ]

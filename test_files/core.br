@@ -1,0 +1,21 @@
+macroblock global _cycle
+    __cycle_start
+    code
+    __cycle_end
+
+macro global _add address to int value
+    __move to :0
+    __plus value
+    __move :0 to
+
+macro global _mov address to address from
+    __move from :0  # go to from
+    _cycle
+        __minus 1  # dec
+        __move to from  # to
+        __plus 1 # inc
+        __move from to  # from
+    __move :0 from
+
+_add :5 10
+_mov :6 :5
