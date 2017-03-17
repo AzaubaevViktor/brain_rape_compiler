@@ -8,14 +8,32 @@ macro global _add address to int value
     __plus value
     __move :0 to
 
-macro global _mov address to address from
-    __move from :0  # go to from
+macro global _inc address addr
+    _add addr 1
+
+macro global _dec address addr
+    _add addr -1
+
+macroblock global _while address addr
+    __move addr :0
     _cycle
-        __minus 1  # dec
-        __move to from  # to
-        __plus 1 # inc
-        __move from to  # from
-    __move :0 from
+        __move :0 addr
+        code
+        __move addr :0
+    __move :0 addr
+
+
+macro global _mov address to address from
+    _while from
+        _dec from
+        _inc to
+
+macro global _mov2 address to1 address to2 address from
+    _while from
+        _dec from
+        _inc to1
+        _inc to2
 
 _add :5 10
 _mov :6 :5
+_mov :7 :8 :6

@@ -60,10 +60,13 @@ class SymbolNotFoundException(Base):
         self.token = token
 
     def __str__(self):
-        return "Невозможно найти {} с именем `{}`".format(
+        s = "Невозможно найти {} с именем `{}`".format(
             self.__class__._what,
             self.token.text
         )
+        s += "\n"
+        s += self.context.error_info(self.token)
+        return s
 
 
 class FunctionNotFoundError(SymbolNotFoundException):
@@ -73,8 +76,3 @@ class FunctionNotFoundError(SymbolNotFoundException):
 class VariableNotFoundError(SymbolNotFoundException):
     _what = "переменную"
 
-    def __str__(self):
-        s = super().__str__()
-        s += "\n"
-        s += self.context.error_info(self.token)
-        return s

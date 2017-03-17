@@ -251,6 +251,9 @@ class _MacroBlock(_Macro):
 
         block_inside = context.expr.block_lines
 
+        # OH SHIT
+        # Не работает code, если её вставлять в другую вложенность
+
         for expr in block_inside:  # type: Expression
             if str(expr.func_token) == 'code':
                 code.append([])

@@ -1,6 +1,7 @@
 from typing import Iterator
 from typing import List, Tuple
 
+from br_exceptions import parser as parser_e
 from br_lexer import Block, Expression
 from br_parser import Function, Argument
 from br_parser import Token, Line, NameSpace, FunctionType
@@ -94,7 +95,11 @@ class Context:
         return cntx
 
     def _determine_function(self):
-        self.func = self.ns.get_func(self.expr.func_token)
+        try:
+            self.func = self.ns.get_func(self.expr.func_token)
+        except parser_e.FunctionNotFoundError as e:
+            e.context = self
+            raise e
 
     def compile(self):
         # found function
