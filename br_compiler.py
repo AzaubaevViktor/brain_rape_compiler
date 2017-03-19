@@ -1,12 +1,12 @@
+from typing import Dict
 from typing import Iterator
 from typing import List, Tuple
 
-from br_lexer import Block, Expression
-from br_parser import Function, Argument
-from br_parser import Token, Line, NameSpace, FunctionType
+from br_lexer import Block, Expression, CodeInception
+from br_parser import Function, Argument, Token, Line, NameSpace, FunctionType,\
+Variable
 from br_exceptions import lexer as lexer_e
 from br_exceptions import compiler as compiler_e
-from br_parser import Variable
 from builtin_functions import builtin_functions
 from builtin_variables import builtin_variables
 from bytecode import ByteCode
@@ -109,7 +109,6 @@ class Context:
                 if FunctionType.NO_BLOCK != self.func.type:
                     raise compiler_e.BlockFunctionError(
                         context=self, function=self.func)
-                    # raise Error
                 self.vars = self.func.check_args(self)
                 self.ch_ns.symbols_push(self.vars.values())
 
@@ -127,8 +126,14 @@ class Context:
                 if FunctionType.BLOCK != self.func.type:
                     raise compiler_e.NoBlockFunctionError(
                         context=self, function=self.func)
-                    # raise Error
                 self.vars = self.func.check_args(self)
+
+                # add code inception
+                self.ch_ns.add_code_inception(
+                    self.func.name,
+                    self.expr.block_lines
+                )
+
                 code = []
                 for part in self.func.code[:-1]:
                     code += part
@@ -140,6 +145,12 @@ class Context:
                 for expr in code:
                     cntx = self.create_child(expr)
                     cntx.compile()
+        elif isinstance(self.expr, CodeInception):
+            wrapper_cntx = self.create_child(self.expr)
+            block_lines = self.ns.get_code_inception(self.expr.name)
+            for expr in block_lines:
+                cntx = wrapper_cntx.create_child(expr)
+                cntx.compile()
 
     def __str__(self):
         btcode = " ".join([str(b) for b in self.bytecode])

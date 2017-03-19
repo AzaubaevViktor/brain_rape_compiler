@@ -78,3 +78,28 @@ class VariableNotFoundError(SymbolNotFoundException):
         s += "\n"
         s += self.context.error_info(self.token)
         return s
+
+
+class CodeInceptionError(Base):
+    def __str__(self):
+        s = self.__class__.__repr__(self)
+        s += "\n"
+        s += self.context.error_info(self.token)
+        return s
+
+
+class CodeInceptionArgumentsError(CodeInceptionError):
+    def __repr__(self):
+        return "Code Inception не может иметь аргументов"
+
+
+class CodeInceptionBlockError(CodeInceptionError):
+    def __repr__(self):
+        return "Code Inception не может быть блоковой функцией"
+
+
+class CodeInceptionNotFound(CodeInceptionError):
+    def __repr__(self):
+        return "Code inception for {} not found".format(
+            self.token.text
+        )

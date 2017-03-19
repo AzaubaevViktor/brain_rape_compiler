@@ -162,3 +162,24 @@ class Block(Expression):
                     line
                 )
         return lines
+
+
+class CodeInception(Expression):
+    """Используется для внедрения кода в macroblock"""
+
+    @property
+    def args(self) -> List[Token]:
+        return self.expr.args
+
+    @property
+    def level(self) -> int:
+        return self.expr.level
+
+    @property
+    def func_token(self) -> Token:
+        return self.expr.func_token
+
+    def __init__(self, expr: Expression, func_name: str):
+        self.func_name = func_name
+        self.expr = expr
+        self.line_n = expr.line_n

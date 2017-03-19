@@ -85,8 +85,7 @@ class Function(Symbol):
                  _type: FunctionType,
                  lifetime: FunctionLifeTime,
                  source: List[Line] or None = None,
-                 code: List[Expression] or
-                       List[List[Expression]] or None = None,
+                 code: List[Expression] or None = None,
                  builtin: bool = False
                  ):
         self.name = name
@@ -170,6 +169,28 @@ class NameSpace:
     def __init__(self, parent: 'NameSpace' or None = None):
         self.parent = parent  # type: NameSpace
         self.symbols = {}
+        self.code_inceptions = {}  # type: Dict[str, List[Expression]]
+
+    # TODO: Не token, а func!
+    def add_code_inception(self,
+                           func_name: str,
+                           exprs: List[Expression]
+                           ):
+        self.code_inceptions[func_name] = exprs
+
+    def get_code_inception(self,
+                           func_name: str
+                           ) -> List[Expression]:
+        if func_name not in self.code_inceptions:
+            if self.parent:
+                return self.parent.get_code_inception(func_name)
+            else:
+                raise parser_e.CodeInceptionNotFound(
+                    context=self,
+                    token=func_name
+                )
+        else:
+            return self.code_inceptions[func_name]
 
     def symbol_lifetime_push(self,
                              lifetime: FunctionLifeTime,
