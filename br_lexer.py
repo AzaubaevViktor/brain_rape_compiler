@@ -180,6 +180,7 @@ class CodeInception(Expression):
         return self.expr.func_token
 
     def __init__(self, expr: Expression, func_name: str):
+        self.name = "code"
         self.func_name = func_name
         self.expr = expr
         self.line_n = expr.line_n
