@@ -1,7 +1,7 @@
 from typing import Dict, List
 
-from br_exceptions.parser import *
-from br_lexer import Token, Expression
+from br_exceptions import parser as parser_e
+from br_lexer import Token, Expression, Block, CodeInception
 from br_parser import Function, Argument, FunctionLifeTime, FunctionType, NameSpace, \
     Variable
 from br_types import IntBrType, IdentifierBrType, BrTypeBrType, \
@@ -182,9 +182,9 @@ class _Macro(Function):
         arg_tokens = context.expr.args
         variables = {}
         if len(arg_tokens) < 2:
-            raise ArgumentLenError(self, arg_tokens, 2)
+            raise parser_e.ArgumentLenError(self, arg_tokens, 2)
         if len(arg_tokens) % 2:
-            raise ArgumentLenError(self, arg_tokens, len(arg_tokens) + 1)
+            raise parser_e.ArgumentLenError(self, arg_tokens, len(arg_tokens) + 1)
 
         params_iter = iter(arg_tokens)
         try:
@@ -247,18 +247,12 @@ class _MacroBlock(_Macro):
         arguments = context.vars['arguments']  # type: List[Argument]
         lifetime = context.vars['lifetime'].value
 
-        code = [[]]
-
         block_inside = context.expr.block_lines
 
-        # OH SHIT
-        # Не работает code, если её вставлять в другую вложенность
-
-        for expr in block_inside:  # type: Expression
-            if str(expr.func_token) == 'code':
-                code.append([])
-            else:
-                code[-1].append(expr)
+        self.find_code_insception(
+            function_name,
+            block_lines
+        )
 
         func = Function(
             function_name,
@@ -266,7 +260,7 @@ class _MacroBlock(_Macro):
             FunctionType.BLOCK,
             lifetime,
             source=block_inside,
-            code=code,
+            code=block_inside,
         )
 
         context.ns.symbol_lifetime_push(lifetime, func)
@@ -276,6 +270,37 @@ class _MacroBlock(_Macro):
               "Add macro function `{}` to current namespace".format(function_name)
               ),
         ]
+
+    def find_code_insception(self,
+                             func_name: str,
+                             block_line: List[Expression]
+                             ):
+        for i, expr in enumerate(block_line):
+            if str(expr.func_token) == 'code':
+                # We found code inception directive!
+                # test correct
+                if len(expr.args) > 0:
+                    raise parser_e.CodeInceptionArgumentsError(
+                        token=expr.args[0]
+                    )
+                if isinstance(expr, Block):
+                    raise parser_e.CodeInceptionBlockError(
+                        token=expr.block_lines[0].func_token
+                    )
+                # ok, code inception correct
+                # replace
+                block_line.pop(i)
+                block_line.insert(
+                    i,
+                    CodeInception(expr=expr,
+                        func_name=func_name)
+                )
+            elif isinstance(expr, Block):
+                # expression is block, recursive call
+                self.find_code_insception(
+                    func_name,
+                    expr.block_lines
+                )
 
 
 macroblock = _MacroBlock(
