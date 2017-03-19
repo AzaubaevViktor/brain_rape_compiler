@@ -184,3 +184,8 @@ class CodeInception(Expression):
         self.func_name = func_name
         self.expr = expr
         self.line_n = expr.line_n
+
+    def __str__(self):
+        return "<CodeInception for function `{}`>".format(
+            self.func_name
+        )

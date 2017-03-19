@@ -249,7 +249,7 @@ class _MacroBlock(_Macro):
         arguments = context.vars['arguments']  # type: List[Argument]
         lifetime = context.vars['lifetime'].value
 
-        block_inside = context.expr.block_lines
+        block_lines = context.expr.block_lines
 
         self.find_code_insception(
             function_name,
@@ -261,8 +261,8 @@ class _MacroBlock(_Macro):
             arguments,
             FunctionType.BLOCK,
             lifetime,
-            source=block_inside,
-            code=block_inside,
+            source=block_lines,
+            code=block_lines,
         )
 
         context.ns.symbol_lifetime_push(lifetime, func)

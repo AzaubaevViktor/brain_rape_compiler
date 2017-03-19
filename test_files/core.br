@@ -1,14 +1,17 @@
 macroblock global _cycle
+    # Standart BrainFuck Cycle
     __cycle_start
     code
     __cycle_end
 
 macro global _add address to int value
+    # Add value to `to` memory cell
     __move to :0
     __plus value
     __move :0 to
 
 macro global _inc address addr
+    # Add 1 to `addr`
     _add addr 1
 
 macro global _dec address addr
@@ -34,6 +37,11 @@ macro global _mov2 address to1 address to2 address from
         _inc to1
         _inc to2
 
+# *:5 += 10
 _add :5 10
+# *:6 = *:5
+# *:5 = 0
 _mov :6 :5
-_mov :7 :8 :6
+# *:7 = *:6
+# *:8 = *:6
+_mov2 :7 :8 :6

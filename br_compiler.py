@@ -7,6 +7,7 @@ from br_parser import Function, Argument, Token, Line, NameSpace, FunctionType,\
 Variable
 from br_exceptions import lexer as lexer_e
 from br_exceptions import compiler as compiler_e
+from br_exceptions import parser as parser_e
 from builtin_functions import builtin_functions
 from builtin_variables import builtin_variables
 from bytecode import ByteCode
@@ -95,7 +96,8 @@ class Context:
 
     def _determine_function(self):
         try:
-            self.func = self.ns.get_func(self.expr.func_token)
+            if not isinstance(self.expr, CodeInception):
+                self.func = self.ns.get_func(self.expr.func_token)
         except parser_e.FunctionNotFoundError as e:
             e.context = self
             raise e
