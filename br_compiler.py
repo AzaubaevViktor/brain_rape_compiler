@@ -94,7 +94,8 @@ class Context:
         return cntx
 
     def _determine_function(self):
-        self.func = self.ns.get_func(self.expr.func_token)
+        if not isinstance(self.expr, CodeInception):
+            self.func = self.ns.get_func(self.expr.func_token)
 
     def compile(self):
         # found function
@@ -134,20 +135,14 @@ class Context:
                     self.expr.block_lines
                 )
 
-                code = []
-                for part in self.func.code[:-1]:
-                    code += part
-                    code += self.expr.block_lines
-                code += self.func.code[-1]
-
                 self.ch_ns.symbols_push(self.vars.values())
 
-                for expr in code:
+                for expr in self.func.code:
                     cntx = self.create_child(expr)
                     cntx.compile()
         elif isinstance(self.expr, CodeInception):
             wrapper_cntx = self.create_child(self.expr)
-            block_lines = self.ns.get_code_inception(self.expr.name)
+            block_lines = self.ns.get_code_inception(self.expr.func_name)
             for expr in block_lines:
                 cntx = wrapper_cntx.create_child(expr)
                 cntx.compile()

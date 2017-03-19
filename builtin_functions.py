@@ -254,7 +254,7 @@ class _MacroBlock(_Macro):
             FunctionType.BLOCK,
             lifetime,
             source=block_lines,
-            code=code,
+            code=block_lines,
         )
 
         context.ns.symbol_lifetime_push(lifetime, func)
