@@ -1,4 +1,4 @@
-macroblock global _cycle
+macroblock global __cycle
     # Standart BrainFuck Cycle
     __cycle_start
     code
@@ -15,16 +15,21 @@ macro global _inc address addr
     _add addr 1
 
 macro global _dec address addr
+    # Add -1 to `addr`
     _add addr -1
 
 macroblock global _while address addr
+    # Cycle while
     __move addr :0
-    _cycle
+    __cycle
         __move :0 addr
         code
         __move addr :0
     __move :0 addr
 
+macro global null address addr
+    _while addr
+        _dec addr
 
 macro global _mov address to address from
     _while from
@@ -37,11 +42,23 @@ macro global _mov2 address to1 address to2 address from
         _inc to1
         _inc to2
 
+macro global copy address to address from
+    null to
+    reg tmp
+    _mov2 to tmp from
+    _mov from to
+
 # *:5 += 10
 _add :5 10
+
 # *:6 = *:5
 # *:5 = 0
 _mov :6 :5
+
 # *:7 = *:6
 # *:8 = *:6
 _mov2 :7 :8 :6
+
+copy :0 :8
+copy :1 :0
+copy :2 :1
