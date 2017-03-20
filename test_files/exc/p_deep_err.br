@@ -1,0 +1,26 @@
+macroblock global one address x
+    macroblock global two address y
+        macroblock global three address z
+            __move z :0
+            __plus 10
+            __move :0 z
+            fdsaf
+            code
+            __move z :0
+            __plus 10
+            __move :0 z
+
+        three :1
+            __move :2 :0
+            __plus 10
+            __move :0 :2
+
+    two :3
+        __move :4 :0
+        __plus 10
+        __move :0 :4
+
+one :5
+    __move :6 :0
+    __plus 10
+    __move :0 :6

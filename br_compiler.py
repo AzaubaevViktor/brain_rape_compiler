@@ -3,8 +3,7 @@ from typing import Iterator
 from typing import List, Tuple
 
 from br_lexer import Block, Expression, CodeInception
-from br_parser import Function, Argument, Token, Line, NameSpace, FunctionType,\
-Variable
+from br_parser import Function, Line, NameSpace, FunctionType, Variable
 from br_exceptions import lexer as lexer_e
 from br_exceptions import compiler as compiler_e
 from br_exceptions import parser as parser_e
@@ -14,7 +13,8 @@ from bytecode import ByteCode
 
 
 class Lexer:
-    def __init__(self, source_lines):
+    def __init__(self, file_name:str, source_lines:List[str]):
+        self.file_name = file_name
         self.source_lines = source_lines
         self.lines = []  # type: List[Line]
         self.block = None  # type: Block
@@ -27,7 +27,7 @@ class Lexer:
         # self.file = open(self.file_name, "rt")
         line_n = 1
         for raw_line in self.source_lines:
-            line = Line(line_n, raw_line)
+            line = Line(self.file_name, line_n, raw_line)
             if line:
                 self.lines.append(line)
 
@@ -35,12 +35,12 @@ class Lexer:
         # self.file.close()
         # add last line for _block_process
         self.lines.append(
-            Line(line_n, "nope")
+            Line(self.file_name, line_n, "nope")
         )
 
     def _block_process(self):
         """ Обрабатывает self.lines и где надо преобразовывает их в блоки"""
-        cur_block = self.block = Block(None, Line(-1, "__main"))
+        cur_block = self.block = Block(None, Line(self.file_name, -1, "__main"))
         cur_iter = iter(self.lines)  # type: Iterator[Line]
         next_iter = iter(self.lines)  # type: Iterator[Line]
         next(next_iter)
@@ -145,10 +145,10 @@ class Context:
                     cntx = self.create_child(expr)
                     cntx.compile()
         elif isinstance(self.expr, CodeInception):
-            wrapper_cntx = self.create_child(self.expr)
+            # wrapper_cntx = self.create_child(self.expr)
             block_lines = self.ns.get_code_inception(self.expr.func_name)
             for expr in block_lines:
-                cntx = wrapper_cntx.create_child(expr)
+                cntx = self.create_child(expr)
                 cntx.compile()
 
     def __str__(self):
@@ -159,11 +159,15 @@ class Context:
             for arg in self.func.arguments:
                 vars.append(self.vars[arg.name])
 
-        return "{self.func}\n{vars}\n{btcode}".format(
-            self=self,
-            vars=vars,
-            btcode=btcode or "--->"
-        )
+            return "{self.func}\n{vars}\n{btcode}".format(
+                self=self,
+                vars=vars,
+                btcode=btcode or "--->"
+            )
+        elif isinstance(self.expr, CodeInception):
+            return str(self.expr) + "\n--->"
+        else:
+            return "Unknown ????"
 
     def debug_print(self, level: int =0, view_func=str) -> List[str]:
         def ident(s):
@@ -175,7 +179,7 @@ class Context:
 
         lines = []
 
-        lines += ident(view_func(self))
+        lines += ident(self)
 
         for cntx in self.childs:
             lines += cntx.debug_print(level + 1)
@@ -187,13 +191,13 @@ class Context:
         _trace = []
         cur_cntx = self
         while cur_cntx.parent:
-            _trace = ["  " + _el for _el in _trace]
-            _vars = ["{var.name} => {var.value_type}".format(var=var) for var in
+            _trace = ["    " + _el for _el in _trace]
+            _vars = ["{var.name} <= {var.value_type}".format(var=var) for var in
                      cur_cntx.vars.values()]
-            _trace = \
-                [str(cur_cntx.func)] \
-                + _vars \
-                + _trace
+            _trace = [str(cur_cntx.func) if cur_cntx.func else
+                      ("{expr.line_n}: {expr}".format(expr=cur_cntx.expr))] \
+                     + _vars \
+                     + _trace
             cur_cntx = cur_cntx.parent
         s += "\n".join(_trace) + "\n"
 
@@ -203,13 +207,14 @@ class Context:
         line_n = "{}: ".format(self.expr.line_n)
         level_tab = "   •" * expr.level
         sourcer = " ".join([t.text for t in expr.tokens])
-        s += "{line_n}`{level_tab}{sourcer}`".format(
+        s += "{file_name}:{line_n}`{level_tab}{sourcer}`".format(
+            file_name=expr.file_name,
             line_n=line_n,
             level_tab=level_tab,
             sourcer=sourcer
         )
         s += "\n"
-        s += " " * (len(line_n) + len(level_tab) + 1)
+        s += " " * (len(expr.file_name) + 1 + len(line_n) + len(level_tab) + 1)
         for t in expr.tokens:
             s += ("^" if t == token else " ") * len(t)
             s += " "

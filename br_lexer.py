@@ -35,18 +35,43 @@ class Expression(metaclass=abc.ABCMeta):
     def level(self) -> int:
         pass
 
+    @property
+    @abc.abstractmethod
+    def file_name(self) -> str:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def tokens(self) -> List[Token]:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def line_n(self) -> int:
+        pass
+
 
 class Line(Expression):
     def __init__(self,
+                 file_name: str,
                  line_n: int,
                  source: str):
-        self.line_n = line_n
+        self._file_name = file_name
+        self._line_n = line_n
         self._level = None  # type: int
-        self.tokens = []  # type: List[Token]
+        self._tokens = []  # type: List[Token]
         self.source = source.rstrip()
 
         self._calc_level()
         self._calc_tokens()
+
+    @property
+    def file_name(self) -> str:
+        return self._file_name
+
+    @property
+    def tokens(self) -> List[Token]:
+        return self._tokens
 
     def _calc_level(self):
         """ Подсчитывает уровень вложенности строки """
@@ -85,6 +110,10 @@ class Line(Expression):
     def level(self) -> int:
         return self._level
 
+    @property
+    def line_n(self) -> int:
+        return self._line_n
+
     def __bool__(self):
         return len(self.tokens) > 0
 
@@ -94,7 +123,8 @@ class Line(Expression):
 
     def __repr__(self):
         tokens_str = " | ".join([repr(token) for token in self.tokens])
-        return "{}[{}]: {}".format(self.line_n, self.level, tokens_str)
+        return "{}:{}[{}]: {}".format(self.file_name,
+                                      self.line_n, self.level, tokens_str)
 
 
 class Block(Expression):
@@ -129,6 +159,10 @@ class Block(Expression):
     @property
     def level(self) -> int:
         return self.first_line.level
+
+    @property
+    def file_name(self) -> str:
+        return self.first_line.file_name
 
     def __repr__(self):
         result = ""
@@ -168,6 +202,14 @@ class CodeInception(Expression):
     """Используется для внедрения кода в macroblock"""
 
     @property
+    def tokens(self) -> List[Token]:
+        return self.expr.tokens
+
+    @property
+    def file_name(self) -> str:
+        return self.expr.file_name
+
+    @property
     def args(self) -> List[Token]:
         return self.expr.args
 
@@ -179,11 +221,14 @@ class CodeInception(Expression):
     def func_token(self) -> Token:
         return self.expr.func_token
 
+    @property
+    def line_n(self) -> int:
+        return self.expr.line_n
+
     def __init__(self, expr: Expression, func_name: str):
         self.name = "code"
         self.func_name = func_name
         self.expr = expr
-        self.line_n = expr.line_n
 
     def __str__(self):
         return "<CodeInception for function `{}`>".format(

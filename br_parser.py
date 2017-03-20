@@ -78,7 +78,6 @@ class FunctionLifeTime(Enum):
 
 class Function(Symbol):
     """ функция """
-
     def __init__(self,
                  name: str,
                  arguments: List[Argument],
@@ -141,6 +140,10 @@ class Function(Symbol):
 
     def compile_block(self, context: 'Context') -> List[ByteCode]:
         return NotImplemented
+
+    @property
+    def file_name(self):
+        return self.source[0].file_name
 
     def __str__(self):
 

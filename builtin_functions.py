@@ -1,9 +1,7 @@
-import sys
-import traceback
 from typing import Dict, List
 
 from br_exceptions import parser as parser_e
-from br_lexer import Token, Expression, Block, CodeInception
+from br_lexer import Expression, Block, CodeInception
 from br_parser import Function, Argument, FunctionLifeTime, FunctionType, NameSpace, \
     Variable
 from br_types import IntBrType, IdentifierBrType, BrTypeBrType, \
@@ -183,10 +181,11 @@ class _Macro(Function):
     def check_args(self, context: 'Context') -> Dict[str, Variable]:
         arg_tokens = context.expr.args
         variables = {}
+        # TODO: Исправить проверку на более понятную
         if len(arg_tokens) < 2:
-            raise parser_e.ArgumentLenError(self, arg_tokens, 2)
+            raise parser_e.ArgumentLenError(context, arg_tokens[2])
         if len(arg_tokens) % 2:
-            raise parser_e.ArgumentLenError(self, arg_tokens, len(arg_tokens) + 1)
+            raise parser_e.ArgumentLenError(context, arg_tokens[len(arg_tokens) - 1])
 
         params_iter = iter(arg_tokens)
         try:
