@@ -1,1 +1,3 @@
-import ../core.br
+import "test_files/core.br"
+
+_add :5 20

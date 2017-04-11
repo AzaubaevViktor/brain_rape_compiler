@@ -1,7 +1,6 @@
 from typing import Dict
 from typing import Iterator
-from typing import List, Tuple
-
+from typing import List
 from br_lexer import Block, Expression, CodeInception
 from br_parser import Function, Line, NameSpace, FunctionType, Variable
 from br_exceptions import lexer as lexer_e
@@ -229,21 +228,21 @@ class Context:
 
 
 class FileCompiler:
-    def __init__(self, file_name: str, block: Block):
+    def __init__(self, file_name: str, block: Block, context: Context = None):
         self.file_name = file_name
         self.block = block
         self.context = None  # type: Context or None
-        self._init_context()
+        self.context = context or self._init_context()
 
-    def _init_context(self):
+    def _init_context(self) -> Context:
         """ Создаёт первичный Context"""
         context = Context(None, self.block)
         context.ch_ns.symbols_push(builtin_functions)
         context.ch_ns.symbols_push(builtin_variables)
-        self.context = context
+        return context
 
-    def compile(self):
-        self._init_context()
+    def compile(self) -> Context:
         for expr in self.block.block_lines:
             cntx = self.context.create_child(expr)
             cntx.compile()
+        return self.context

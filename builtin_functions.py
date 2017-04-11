@@ -5,11 +5,12 @@ from br_lexer import Expression, Block, CodeInception
 from br_parser import Function, Argument, FunctionLifeTime, FunctionType, NameSpace, \
     Variable
 from br_types import IntBrType, IdentifierBrType, BrTypeBrType, \
-    FunctionLifeTimeBrType, AddressBrType
+    FunctionLifeTimeBrType, AddressBrType, StrBrType
 from bytecode import ByteCode as B
 
 
 class _Nope(Function):
+    """ Функция ничего не делает """
     def compile(self, context: 'Context') -> List[B]:
         return [
             B("#", "Nope func")
@@ -25,6 +26,7 @@ nope = _Nope(
 
 
 class _Plus(Function):
+    """ Стандартный `+` из BF """
     def compile(self, context: 'Context') -> List[B]:
         value = context.vars['value'].value
         return [
@@ -43,6 +45,7 @@ plus = _Plus(
 
 
 class _Minus(Function):
+    """ Стандартный `-` из BF """
     def compile(self, context: 'Context') -> List[B]:
         value = context.vars['value'].value
         return [
@@ -61,6 +64,7 @@ minus = _Minus(
 
 
 class _MovAbs(Function):
+    """ `>` """
     def compile(self, context: 'Context') -> List[B]:
         value = context.vars['value'].value
         return [
@@ -79,6 +83,7 @@ mov_abs = _MovAbs(
 
 
 class _MovAbsL(Function):
+    """ `<` """
     def compile(self, context: 'Context') -> List[B]:
         value = context.vars['value'].value
         return [
@@ -97,6 +102,7 @@ mov_abs_l = _MovAbsL(
 
 
 class _Move(Function):
+    """ Переместить с адреса from на адрес to """
     def compile(self, context: 'Context') -> List[B]:
         addr_to = context.vars['to'].value
         addr_from = context.vars['from'].value
@@ -117,6 +123,7 @@ move = _Move(
 
 
 class _Print(Function):
+    """ Распечатать текущую ячейку """
     def compile(self, context: 'Context') -> List[B]:
         return [
             B("."),
@@ -132,6 +139,7 @@ _print = _Print(
 
 
 class _Read(Function):
+    """ Считать в текущую ячейку """
     def compile(self, context: 'Context') -> List[B]:
         return [
             B(","),
@@ -148,6 +156,7 @@ read = _Read(
 
 
 class _CycleStart(Function):
+    """ Начало цикла """
     def compile(self, context: 'Context'):
         return [
             B("[")
@@ -163,6 +172,7 @@ cycle_start = _CycleStart(
 
 
 class _CycleEnd(Function):
+    """ Конец цикла """
     def compile(self, context: 'Context'):
         return [
             B("]")
@@ -294,7 +304,7 @@ class _MacroBlock(_Macro):
                 block_line.insert(
                     i,
                     CodeInception(expr=expr,
-                        func_name=func_name)
+                                  func_name=func_name)
                 )
             elif isinstance(expr, Block):
                 # expression is block, recursive call
@@ -354,6 +364,39 @@ reg = _Reg(
     builtin=True
 )
 
+
+class Import(Function):
+    def compile(self, context: 'Context') -> List[B]:
+        file_name = context.vars['file_name'].value
+        from br_compiler import Lexer
+
+        block = None
+        with open(file_name, 'rt') as f:
+            l = Lexer(file_name, f.readlines())
+            block = l.block
+
+        from br_compiler import FileCompiler
+        compiler = FileCompiler(file_name, block, context)
+        compiler.compile()
+        return [
+            B("#",
+              "Imported code from `{}`".format(
+                  file_name
+              )
+              )
+        ]
+
+
+_import = Import(
+    'import',
+    [
+        Argument('file_name', StrBrType)
+    ],
+    FunctionType.NO_BLOCK,
+    FunctionLifeTime.GLOBAL,
+    builtin=True
+)
+
 builtin_functions = [
     nope,
     plus,
@@ -367,5 +410,6 @@ builtin_functions = [
     cycle_end,
     macro,
     reg,
-    macroblock
+    macroblock,
+    _import
 ]

@@ -24,6 +24,13 @@ class Memory:
         self.cur_len = 0
         self.data = []
 
+    def _last_not_null_index(self):
+        for v in range(1, len(self.data) + 1):
+            if self.data[-v]:
+                return len(self.data) - v
+        return 0
+
+
     def __iter__(self):
         return self.MemoryIterator(self)
 
@@ -51,8 +58,26 @@ class Memory:
                 d[k] = v
         return d
 
+    def __repr__(self):
+        return repr(self.data)
+
     def __str__(self):
-        return str(self.data)
+        s = "Memory:\n"
+        indexes = []
+        values = []
+
+        for i, v in enumerate(self.data[:self._last_not_null_index() + 1]):
+            i = str(i)
+            v = str(v)
+            ml = max(len(i), len(v))
+            indexes.append(i.ljust(ml))
+            values.append(v.ljust(ml))
+
+        s += "V: " + ", ".join(values) + "\n"
+        s += "#: " + "  ".join(indexes)
+        return s
+
+
 
 
 class Interpreter:

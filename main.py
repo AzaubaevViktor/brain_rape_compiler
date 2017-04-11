@@ -1,8 +1,11 @@
+import os
+
 from br_compiler import FileCompiler, Lexer
 from executor import Interpreter
 
 if __name__ == "__main__":
-    file_name = 'test_files/exc/p_deep_err.br'
+    print("Working directory:", os.getcwd())
+    file_name = 'test_files/import/1.br'
     block = None
     with open(file_name, 'rt') as f:
         l = Lexer(file_name, f.readlines())

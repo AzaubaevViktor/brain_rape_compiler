@@ -12,11 +12,13 @@ macroblock global one address x
 
         three :1
             __move :2 :0
+            code
             __plus 10
             __move :0 :2
 
     two :3
         __move :4 :0
+        code
         __plus 10
         __move :0 :4
 
