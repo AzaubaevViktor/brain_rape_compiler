@@ -1,0 +1,5 @@
+import "test/core.br"
+
+_add :5 20
+
+

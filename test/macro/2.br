@@ -1,0 +1,10 @@
+# Тестируем несколько аргументов
+
+macro global test address when int what
+    __move when :0
+    __plus what
+    __move :0 when
+
+test :5 15
+
+#~ test_MEMORYD 5 15

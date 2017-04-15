@@ -70,10 +70,10 @@ class FunctionType(Enum):
     BLOCK = 2
 
 
-class FunctionLifeTime(Enum):
-    GLOBAL = 1  # Текущий namespace и дочерние
-    LOCAL = 2  # Только текущий namespace
-    NEXT_OR_NEVER = 3  # Должен быть следующим, либо удаляется из namespace
+class LifeTime(Enum):
+    GLOBAL = 1  # Глобальный NameSpace
+    LOCAL = 2  # Текущий и дочерние NameSpace
+    # INSIDE = 3  # Только текущий NameSpace
 
 
 class Function(Symbol):
@@ -82,7 +82,7 @@ class Function(Symbol):
                  name: str,
                  arguments: List[Argument],
                  _type: FunctionType,
-                 lifetime: FunctionLifeTime,
+                 lifetime: LifeTime,
                  source: List[Line] or None = None,
                  code: List[Expression] or None = None,
                  builtin: bool = False
@@ -172,18 +172,17 @@ class NameSpace:
     def __init__(self, parent: 'NameSpace' or None = None):
         self.parent = parent  # type: NameSpace
         self.symbols = {}
-        self.code_inceptions = {}  # type: Dict[str, List[Expression]]
+        self.code_inceptions = {}  # type: Dict[str, List[ByteCode]]
 
-    # TODO: Не token, а func!
     def add_code_inception(self,
                            func_name: str,
-                           exprs: List[Expression]
+                           bytecode: List[ByteCode]
                            ):
-        self.code_inceptions[func_name] = exprs
+        self.code_inceptions[func_name] = bytecode
 
     def get_code_inception(self,
                            func_name: str
-                           ) -> List[Expression]:
+                           ) -> List[ByteCode]:
         if func_name not in self.code_inceptions:
             if self.parent:
                 return self.parent.get_code_inception(func_name)
@@ -195,28 +194,11 @@ class NameSpace:
         else:
             return self.code_inceptions[func_name]
 
-    def symbol_lifetime_push(self,
-                             lifetime: FunctionLifeTime,
-                             symbol: Symbol
-                             ):
-        if FunctionLifeTime.GLOBAL == lifetime:
-            self.symbol_global_push(symbol)
-        elif FunctionLifeTime.LOCAL == lifetime:
-            self.symbol_push(symbol)
-        elif FunctionLifeTime.NEXT_OR_NEVER == lifetime:
-            self.symbol_parent_push(symbol)
+    def symbol_push(self, symbol: Symbol, lifetime: LifeTime = None):
+        lifetime = lifetime or LifeTime.LOCAL
 
-    def symbol_push(self, symbol: Symbol):
-        self.symbols[symbol.name] = symbol
-
-    def symbol_global_push(self, symbol: Symbol):
-        if self.parent:
-            self.parent.symbol_global_push(symbol)
-        else:
-            self.symbol_push(symbol)
-
-    def symbol_parent_push(self, symbol: Symbol):
-        self.parent.symbol_push(symbol)
+        if LifeTime.LOCAL:
+            self.symbols[symbol.name] = symbol
 
     def symbols_push(self, symbols: Iterable[Symbol]):
         for symbol in symbols:
@@ -225,8 +207,6 @@ class NameSpace:
     def get(self, item: Token, default=None) -> Symbol:
         if item.text in self.symbols:
             return self.symbols[item.text]
-        elif self.parent:
-            return self.parent.get(item, default)
         else:
             return default
 
@@ -241,8 +221,6 @@ class NameSpace:
         for symbol in self.symbols.values():
             if isinstance(symbol, Variable):
                 yield symbol
-        if self.parent:
-            yield from self.parent.get_vars()
 
     def get_func(self, token: Token) -> Function:
         func = self.get(token)

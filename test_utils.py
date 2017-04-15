@@ -29,6 +29,27 @@ class BrTests:
 
 
 def get_tests(file_name) -> BrTests:
+    """
+    В файле можно указывать:
+    
+    #~test_MEMORYL 0 0 0 10 _ _ 5
+    Числа проверяет, пропуски не проверяет
+    
+    #~test_MEMORYD memory_index memory_value
+    Проверяет только одну пару
+    
+    #~test_INPUT "ololo"
+    Данные, которые вводятся в программу
+    
+    #~test_OUTPUT "ololo"
+    Данные, которые выводятся из программы
+    
+    #~test_EXCEPTION exception_class_name
+    Проверяет, что выброшено исключение
+    
+    :param file_name: 
+    :return: 
+    """
     memory_tests = []
     memory_dict_test = {}
     exc_name = None
@@ -37,7 +58,7 @@ def get_tests(file_name) -> BrTests:
     with open(file_name, 'rt') as f:
         lines = f.readlines()
         for line in lines:
-            if "#!" != line[:2]:
+            if "#~" != line[:2]:
                 continue
             tokens = clear_list(line.split(" ")[1:])
             if "test_MEMORYL" == tokens[0]:

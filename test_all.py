@@ -16,7 +16,7 @@ def file_execute(file_name, test: BrTests):
 
     try:
         with open(file_name, 'rt') as f:
-            l = Lexer(f.readlines())
+            l = Lexer(file_name, f.readlines())
 
             block = l.block
 
@@ -68,7 +68,7 @@ def file_execute(file_name, test: BrTests):
 
 
 def test_files():
-    file_names = sorted(glob.glob("./test_files/*/*.br", recursive=True))
+    file_names = sorted(glob.glob("./test/*/*.br", recursive=True))
 
     for file_name in file_names:
         test = get_tests(file_name)

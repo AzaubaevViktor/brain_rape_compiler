@@ -2,7 +2,7 @@ from typing import Dict, List
 
 from br_exceptions import parser as parser_e
 from br_lexer import Expression, Block, CodeInception
-from br_parser import Function, Argument, FunctionLifeTime, FunctionType, NameSpace, \
+from br_parser import Function, Argument, LifeTime, FunctionType, NameSpace, \
     Variable
 from br_types import IntBrType, IdentifierBrType, BrTypeBrType, \
     FunctionLifeTimeBrType, AddressBrType, StrBrType
@@ -20,7 +20,7 @@ nope = _Nope(
     '__nope',
     [],
     FunctionType.NO_BLOCK,
-    FunctionLifeTime.GLOBAL,
+    LifeTime.GLOBAL,
     builtin=True
 )
 
@@ -39,7 +39,7 @@ plus = _Plus(
         Argument('value', IntBrType)
     ],
     FunctionType.NO_BLOCK,
-    FunctionLifeTime.GLOBAL,
+    LifeTime.GLOBAL,
     builtin=True
 )
 
@@ -58,7 +58,7 @@ minus = _Minus(
         Argument('value', IntBrType)
     ],
     FunctionType.NO_BLOCK,
-    FunctionLifeTime.GLOBAL,
+    LifeTime.GLOBAL,
     builtin=True
 )
 
@@ -77,7 +77,7 @@ mov_abs = _MovAbs(
         Argument('value', IntBrType)
     ],
     FunctionType.NO_BLOCK,
-    FunctionLifeTime.GLOBAL,
+    LifeTime.GLOBAL,
     builtin=True
 )
 
@@ -96,7 +96,7 @@ mov_abs_l = _MovAbsL(
         Argument('value', IntBrType)
     ],
     FunctionType.NO_BLOCK,
-    FunctionLifeTime.GLOBAL,
+    LifeTime.GLOBAL,
     builtin=True
 )
 
@@ -117,7 +117,7 @@ move = _Move(
         Argument('from', AddressBrType),
     ],
     FunctionType.NO_BLOCK,
-    FunctionLifeTime.GLOBAL,
+    LifeTime.GLOBAL,
     builtin=True
 )
 
@@ -133,7 +133,7 @@ _print = _Print(
     '__print',
     [],
     FunctionType.NO_BLOCK,
-    FunctionLifeTime.GLOBAL,
+    LifeTime.GLOBAL,
     builtin=True
 )
 
@@ -150,7 +150,7 @@ read = _Read(
     '__read',
     [],
     FunctionType.NO_BLOCK,
-    FunctionLifeTime.GLOBAL,
+    LifeTime.GLOBAL,
     builtin=True
 )
 
@@ -166,7 +166,7 @@ cycle_start = _CycleStart(
     "__cycle_start",
     [],
     FunctionType.NO_BLOCK,
-    FunctionLifeTime.GLOBAL,
+    LifeTime.GLOBAL,
     builtin=True
 )
 
@@ -182,7 +182,7 @@ cycle_end = _CycleEnd(
     "__cycle_end",
     [],
     FunctionType.NO_BLOCK,
-    FunctionLifeTime.GLOBAL,
+    LifeTime.GLOBAL,
     builtin=True
 )
 
@@ -247,7 +247,7 @@ macro = _Macro(
     "macro",
     [],  # because custom check_args
     FunctionType.BLOCK,
-    FunctionLifeTime.GLOBAL,
+    LifeTime.GLOBAL,
     builtin=True
 )
 
@@ -318,7 +318,7 @@ macroblock = _MacroBlock(
     "macroblock",
     [],  # because custom check_args
     FunctionType.BLOCK,
-    FunctionLifeTime.GLOBAL,
+    LifeTime.GLOBAL,
     builtin=True
 )
 
@@ -360,7 +360,7 @@ reg = _Reg(
         Argument('name', IdentifierBrType)
     ],
     FunctionType.NO_BLOCK,
-    FunctionLifeTime.GLOBAL,
+    LifeTime.GLOBAL,
     builtin=True
 )
 
@@ -393,7 +393,7 @@ _import = Import(
         Argument('file_name', StrBrType)
     ],
     FunctionType.NO_BLOCK,
-    FunctionLifeTime.GLOBAL,
+    LifeTime.GLOBAL,
     builtin=True
 )
 

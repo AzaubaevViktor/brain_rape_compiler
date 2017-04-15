@@ -4,7 +4,7 @@ from typing import Any
 
 from br_exceptions.types import *
 from br_lexer import Token
-from br_parser import FunctionLifeTime
+from br_parser import LifeTime
 
 
 class AbstractBrType(metaclass=abc.ABCMeta):
@@ -102,7 +102,7 @@ class BrTypeBrType(AbstractBrType):
 class FunctionLifeTimeBrType(AbstractBrType):
     _type_name = "function_type"
     # TODO: Разобраться с этим говном
-    _values = {i.name.lower(): i for i in FunctionLifeTime}
+    _values = {i.name.lower(): i for i in LifeTime}
 
     def _parse(self):
         name = self.text

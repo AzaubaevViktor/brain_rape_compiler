@@ -1,5 +1,0 @@
-reg var
-_add var 105
-_print var
-
-# !test_OUTPUT "i"

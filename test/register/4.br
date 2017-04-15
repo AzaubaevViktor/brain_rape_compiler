@@ -1,0 +1,20 @@
+reg A
+
+macroblock local tost
+    reg local X
+    code
+
+macroblock local trust
+    reg local X
+    code
+
+macro local test
+    reg local X
+
+    add X 10 # Можно
+
+    tost
+        trust
+            add X 10 # Можно
+
+

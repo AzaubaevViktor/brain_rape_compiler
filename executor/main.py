@@ -65,14 +65,18 @@ class Memory:
         s = "Memory:\n"
         indexes = []
         values = []
+        chars = []
 
         for i, v in enumerate(self.data[:self._last_not_null_index() + 1]):
             i = str(i)
-            v = str(v)
-            ml = max(len(i), len(v))
+            vs = str(v)
+            rv = repr(chr(v))
+            ml = max(len(i), len(vs), len(rv))
             indexes.append(i.ljust(ml))
-            values.append(v.ljust(ml))
+            values.append(vs.ljust(ml))
+            chars.append(rv.ljust(ml))
 
+        s += "C: " + "  ".join(chars) + "\n"
         s += "V: " + ", ".join(values) + "\n"
         s += "#: " + "  ".join(indexes)
         return s

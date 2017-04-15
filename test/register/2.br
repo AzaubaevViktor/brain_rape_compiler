@@ -1,0 +1,24 @@
+# Тестирование нескольких регистров
+
+macro global add address when int what
+    __move when :0
+    __plus what
+    __move :0 when
+
+
+reg global one
+reg global two
+reg global three
+
+add one 33 # '!'
+add two 72 # 'H'
+add three 105 # 'i'
+
+__move two :0
+__print
+__move three two
+__print
+__move one three
+__print
+
+#~ test_OUTPUT "Hi!"

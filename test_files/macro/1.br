@@ -1,7 +1,0 @@
-macro global test address ARG
-    _add ARG 100
-
-test :5
-
-#! test_MEMORYL 0 0 0 0 0 100
-#! test_MEMORYD 5 100

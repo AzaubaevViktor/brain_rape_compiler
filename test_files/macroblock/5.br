@@ -1,0 +1,14 @@
+macro local _add address to int value
+    # Add value to `to` memory cell
+    __move to :0
+    __plus value
+    __move :0 to
+
+macroblock global t
+    reg x
+    _add x 75
+
+    code
+
+t
+    reg x

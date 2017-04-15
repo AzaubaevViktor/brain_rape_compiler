@@ -1,6 +1,0 @@
-macro global test int what address when
-    _add when what
-
-test 15 :5
-
-#! test_MEMORYD 5 15

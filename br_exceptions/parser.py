@@ -53,6 +53,17 @@ class ArgumentCheckTypeError(ArgumentCheckError):
         return s
 
 
+class SymbolDuplicate(Base):
+    def __init__(self, token: 'Token'):
+        self.token = token
+
+    def __str__(self):
+        s = "Дублирующийся символ {} с именем {}".format(
+            self.token,
+            self.token.text
+        )
+
+
 class SymbolNotFoundException(Base):
     _what = "символ"
 

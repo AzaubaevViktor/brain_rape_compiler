@@ -2,7 +2,8 @@ from typing import Dict
 from typing import Iterator
 from typing import List
 from br_lexer import Block, Expression, CodeInception
-from br_parser import Function, Line, NameSpace, FunctionType, Variable
+from br_parser import Function, Line, NameSpace, FunctionType, Variable, \
+    LifeTime, Symbol
 from br_exceptions import lexer as lexer_e
 from br_exceptions import compiler as compiler_e
 from br_exceptions import parser as parser_e
@@ -85,7 +86,24 @@ class Context:
     def ns(self):
         return self.ch_ns.parent
 
-    def create_child(self, expr: Expression) -> 'Context':
+    def symbol_push(self, lifetime: LifeTime, symbol: Symbol):
+        self.ch_ns.symbol_push(lifetime, symbol)
+
+    def get_all_vars(self) -> Iterator[Variable]:
+        """ 
+        :return: Возвращает все переменные из всех контекстов
+        """
+        cur_ns = self.ch_ns
+        while True:
+            yield from cur_ns.get_vars()
+            if cur_ns.parent is None:
+                return
+            cur_ns = cur_ns.parent
+
+    def get_var(self, identifier: 'IdentifierBrType') -> Variable:
+        pass
+
+    def create_child(self, expr: Expression, add_child=True) -> 'Context':
         cntx = Context(parent=self,
                        expr=expr,
                        namespace=self.ch_ns.create_namespace()
@@ -104,6 +122,7 @@ class Context:
     def compile(self):
         # found function
         self._determine_function()
+        # check function type
         if isinstance(self.expr, Line):
             if self.func.builtin:
                 # Builtin, NoBlock
@@ -127,18 +146,25 @@ class Context:
                 self.vars = self.func.check_args(self)
                 self.bytecode = self.func.compile_block(self)
             else:
-                # not builtin block
+                # Not builtin Block
                 if FunctionType.BLOCK != self.func.type:
                     raise compiler_e.NoBlockFunctionError(
                         context=self, function=self.func)
+
                 self.vars = self.func.check_args(self)
+                self.ch_ns.symbols_push(self.vars.values())
+
+                # Compile code inception
+                bytecode = []
+                for expr in self.expr.block_lines:
+                    ci_cntx = self.create_child(expr, add_child=False)
+                    ci_cntx.compile()
+                    bytecode += ci_cntx.bytecode
 
                 self.ch_ns.add_code_inception(
                     self.func.name,
-                    self.expr.block_lines
+                    bytecode
                 )
-
-                self.ch_ns.symbols_push(self.vars.values())
 
                 for expr in self.func.code:
                     cntx = self.create_child(expr)

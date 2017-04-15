@@ -1,0 +1,24 @@
+# Тестирование регистров внутри макроса и регистров снаружи
+
+reg local A
+reg local RES
+
+macro global test
+    reg local RES
+    __move RES :0
+    __plus 3
+    __move :0 RES
+
+
+test
+__move RES :0
+__plus 75
+__print
+__move :0 RES
+
+
+#~ test_OUTPUT "K"
+
+
+
+
