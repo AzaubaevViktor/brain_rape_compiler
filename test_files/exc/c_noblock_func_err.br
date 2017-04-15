@@ -1,8 +1,0 @@
-macro global test
-    _add :0 0
-    _add :0 0
-
-test
-    _add :0 0
-
-#! test_EXCEPTION NoBlockFunctionError

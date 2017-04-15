@@ -1,1 +1,1 @@
-from .main import Interpreter
+from .main import Interpreter, Memory

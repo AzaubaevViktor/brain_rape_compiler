@@ -1,8 +1,0 @@
-# Тестируем встроенную функцию __read
-
-__read
-__plus 1
-__print
-
-#~ test_INPUT "L"
-#~ test_OUTPUT "M"

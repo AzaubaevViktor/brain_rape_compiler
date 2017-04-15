@@ -1,9 +1,0 @@
-# Тестируем встроенную функцию __movabs и __movabsl
-__movabs 100
-__plus 50
-__movabsl 50
-__plus 25
-__movabsl 50
-
-#~ test_MEMORYD 50 25
-#~ test_MEMORYD 100 50

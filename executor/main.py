@@ -30,7 +30,6 @@ class Memory:
                 return len(self.data) - v
         return 0
 
-
     def __iter__(self):
         return self.MemoryIterator(self)
 
@@ -61,7 +60,7 @@ class Memory:
     def __repr__(self):
         return repr(self.data)
 
-    def __str__(self):
+    def debug_print(self):
         s = "Memory:\n"
         indexes = []
         values = []
@@ -80,8 +79,6 @@ class Memory:
         s += "V: " + ", ".join(values) + "\n"
         s += "#: " + "  ".join(indexes)
         return s
-
-
 
 
 class Interpreter:

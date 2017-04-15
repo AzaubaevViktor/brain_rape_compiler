@@ -1,7 +1,0 @@
-_add :1 100
-_add :100 1000
-_add :100000 50
-
-#! test_MEMORYD 1 100
-#! test_MEMORYD 100 232
-#! test_MEMORYD 100000 50

@@ -1,3 +1,0 @@
-_add unknown_var 10
-
-#! test_EXCEPTION VariableNotFoundError
