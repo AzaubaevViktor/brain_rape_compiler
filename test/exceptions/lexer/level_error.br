@@ -1,0 +1,16 @@
+a
+b
+c
+    d
+# test
+     error here    #   this is comment
+        f
+        g
+            h a b
+    i
+j
+
+#~ desc Проверка на то, что лексер правильно обрабатывает ситуацию,
+#~ desc когда в линии неверное количество пробелов
+#~ exception LevelError
+

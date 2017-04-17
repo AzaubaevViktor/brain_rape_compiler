@@ -1,0 +1,17 @@
+a
+b
+c
+    d
+# test
+    error here    #   this is comment
+        f
+        g
+            h a b
+                    error here  # because +2 level
+    i
+j
+
+#~ desc Проверка на то, что лексер выбросит исключение при попытке
+#~ desc подняться на два уровня вглубь
+#~ exception BlockLevelError
+
